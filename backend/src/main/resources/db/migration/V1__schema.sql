@@ -10,7 +10,6 @@ CREATE TABLE users (
     id              bigint        NOT NULL GENERATED ALWAYS AS IDENTITY (INCREMENT BY 1 START WITH 1),
     login           varchar(30)   NOT NULL,
     password        varchar(30)   NOT NULL,
-    role_id         bigint        NOT NULL,
     email           varchar(50)   NOT NULL,
     first           varchar(50)   NOT NULL,
     last            varchar(50)   NOT NULL,
@@ -36,11 +35,12 @@ CREATE TABLE user_groups (
 );
 
 CREATE TABLE user_testproject_roles (
+    id             bigint        NOT NULL,
     user_id        bigint        NOT NULL,
     testproject_id bigint        NOT NULL,
     role_id        bigint        NOT NULL,
 
-    PRIMARY KEY (user_id, testproject_id)
+    PRIMARY KEY (id)
 );
 
 CREATE TABLE roles (
