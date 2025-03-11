@@ -28,10 +28,6 @@ public class User {
     @Column(name = "password", nullable = false, length = 30)
     private String password;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
-
     @Column(name = "email", nullable = false, length = 50)
     private String email;
 
