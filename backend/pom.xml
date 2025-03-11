@@ -28,6 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<jjwt.version>0.12.6</jjwt.version>
 		<postgreSQL.version>42.7.4</postgreSQL.version>
 		<lombok.version>1.18.34</lombok.version>
 	</properties>
@@ -56,6 +57,12 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt</artifactId>
+			<version>${jjwt.version}</version>
 		</dependency>
 
 		<!-- Lombok-->

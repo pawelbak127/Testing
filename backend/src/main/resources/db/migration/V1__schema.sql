@@ -249,8 +249,8 @@ CREATE TABLE req_versions (
 
 CREATE TABLE req_relations (
     id              bigint        GENERATED ALWAYS AS IDENTITY (INCREMENT BY 1 START WITH 1) NOT NULL,
-    req_version_id  integer       NOT NULL,
-    tc_version_id   integer       NOT NULL,
+    req_version_id  bigint        NOT NULL,
+    tc_version_id   bigint        NOT NULL,
     author_id       bigint        NOT NULL,
     creation_ts     timestamp,
 
@@ -273,8 +273,6 @@ CREATE TABLE attachments (
 
     PRIMARY KEY (id)
 );
-
-ALTER TABLE users ADD FOREIGN KEY (role_id) REFERENCES roles (id);
 
 ALTER TABLE user_groups ADD FOREIGN KEY (owner_id) REFERENCES users (id);
 

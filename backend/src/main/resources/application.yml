@@ -5,9 +5,9 @@ spring:
   application:
     name: TestManagement
   datasource:
-    url: jdbc:postgresql://ep-shrill-frog-a2vjr7pk-pooler.eu-central-1.aws.neon.tech:5432/neondb
-    username: neondb_owner
-    password: npg_NmRYdTXexp14
+    url: jdbc:postgresql://localhost:5432/test_management
+    username: expert
+    password: expert
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -17,3 +17,6 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+
+jwt:
+  expiration-time: 3600000
