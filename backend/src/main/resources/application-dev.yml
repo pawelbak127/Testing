@@ -16,3 +16,5 @@ spring:
     baseline-on-migrate: true
 server:
   port: 8080
+jwt:
+  expiration-time: 3600000
