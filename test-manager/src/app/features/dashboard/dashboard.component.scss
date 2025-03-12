@@ -1,0 +1,129 @@
+.dashboard-container {
+  .page-actions {
+    display: flex;
+    align-items: center;
+    
+    .filter-button {
+      margin-right: 12px;
+    }
+    
+    .view-toggle {
+      display: flex;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 4px;
+      overflow: hidden;
+      
+      .dark-theme & {
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+      
+      .view-toggle-button {
+        border-radius: 0;
+        
+        &.active {
+          background-color: rgba(0, 0, 0, 0.04);
+          
+          .dark-theme & {
+            background-color: rgba(255, 255, 255, 0.08);
+          }
+        }
+      }
+    }
+  }
+  
+  .metrics-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .charts-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    
+    @media (max-width: 992px) {
+      grid-template-columns: 1fr;
+    }
+    
+    .chart-card {
+      .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        
+        .chart-title {
+          font-size: 16px;
+          font-weight: 500;
+          margin: 0;
+        }
+        
+        .time-range-selector {
+          width: 160px;
+          
+          ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+            display: none;
+          }
+        }
+        
+        .see-all-link {
+          font-size: 14px;
+        }
+      }
+      
+      .chart-placeholder {
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+      }
+      
+      .recent-tests-list {
+        .recent-test-item {
+          margin-bottom: 12px;
+          padding: 12px;
+          
+          .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            
+            .test-name {
+              font-weight: 500;
+            }
+            
+            .test-status {
+              padding: 2px 8px;
+              border-radius: 12px;
+              font-size: 12px;
+              
+              &.success {
+                background-color: rgba(76, 175, 80, 0.1);
+                color: #4caf50;
+              }
+              
+              &.error {
+                background-color: rgba(244, 67, 54, 0.1);
+                color: #f44336;
+              }
+              
+              &.in-progress {
+                background-color: rgba(255, 152, 0, 0.1);
+                color: #ff9800;
+              }
+            }
+          }
+          
+          .test-details {
+            font-size: 14px;
+            color: var(--text-secondary);
+          }
+        }
+      }
+    }
+  }
+}
