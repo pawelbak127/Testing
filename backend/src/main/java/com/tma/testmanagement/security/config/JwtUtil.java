@@ -13,10 +13,9 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
+    private final SecretKey secretKey = getSigningKey();
     @Value("${jwt.expiration-time}")
     private String expirationTime;
-
-    private final SecretKey secretKey = getSigningKey();
 
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()

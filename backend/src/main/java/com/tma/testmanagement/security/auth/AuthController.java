@@ -2,7 +2,7 @@ package com.tma.testmanagement.security.auth;
 
 import com.tma.testmanagement.security.CustomUserDetailsService;
 import com.tma.testmanagement.security.config.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,28 +16,22 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
-public class AuthenticationController {
+@RequiredArgsConstructor
+public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtUtil jwtUtil;
 
-    @Autowired
-    public AuthenticationController(AuthenticationManager authenticationManager, CustomUserDetailsService customUserDetailsService, JwtUtil jwtUtil) {
-        this.authenticationManager = authenticationManager;
-        this.customUserDetailsService = customUserDetailsService;
-        this.jwtUtil = jwtUtil;
-    }
-
     @PostMapping
-    public ResponseEntity<?> authenticate(@RequestBody AuthenticationRequest authenticationRequest) {
+    public ResponseEntity<?> authenticate(@RequestBody AuthRequest authRequest) {
         try {
             authenticationManager
-                    .authenticate(new UsernamePasswordAuthenticationToken(authenticationRequest.login(), authenticationRequest.password()));
+                    .authenticate(new UsernamePasswordAuthenticationToken(authRequest.login(), authRequest.password()));
         } catch (BadCredentialsException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
         }
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername(authenticationRequest.login());
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(authRequest.login());
         return ResponseEntity.ok(jwtUtil.generateToken(userDetails));
     }
 }

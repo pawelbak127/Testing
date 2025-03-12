@@ -9,22 +9,20 @@ import java.util.List;
 
 public class CustomUserDetails implements UserDetails {
 
-    private final String username;
-    private final String password;
+    private final User user;
 
     public CustomUserDetails(User user) {
-        this.username = user.getLogin();
-        this.password = user.getPassword();
+        this.user = user;
     }
 
     @Override
     public String getUsername() {
-        return username;
+        return user.getLogin();
     }
 
     @Override
     public String getPassword() {
-        return password;
+        return user.getPassword();
     }
 
     @Override
