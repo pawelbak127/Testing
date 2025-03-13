@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -17,12 +17,12 @@ import { ThemeService } from './core/services/theme.service';
     SidebarComponent
   ],
   template: `
-    <div [ngClass]="{'dark-theme': themeService.darkMode(), 'light-theme': !themeService.darkMode()}" class="app-container">
+    <div class="app-container">
       <app-navigation (sidebarToggled)="toggleSidenav()"></app-navigation>
-      
+
       <mat-sidenav-container class="sidenav-container">
         <app-sidebar [opened]="sidenavOpened()"></app-sidebar>
-        
+
         <mat-sidenav-content class="sidenav-content-container">
           <div class="main-content">
             <router-outlet></router-outlet>
@@ -48,11 +48,19 @@ import { ThemeService } from './core/services/theme.service';
     }
   `]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   sidenavOpened = signal(true);
-  
+
   constructor(public themeService: ThemeService) {}
-  
+
+  ngOnInit() {
+    // Initialize theme on startup
+    const isDarkMode = this.themeService.isDarkMode();
+    if (isDarkMode) {
+      this.themeService.applyTheme(true);
+    }
+  }
+
   toggleSidenav() {
     this.sidenavOpened.update(value => !value);
   }

@@ -27,48 +27,126 @@ import { ThemeService } from '../../../core/services/theme.service';
       <button mat-icon-button (click)="sidebarToggled.emit()">
         <mat-icon>menu</mat-icon>
       </button>
-      
-      <div class="logo">
+
+      <div class="logo" routerLink="/dashboard">
         <span class="primary-text">Test</span>
         <span>Manager</span>
       </div>
-      
+
       <div class="main-nav">
         <a mat-button routerLink="/dashboard" routerLinkActive="active-link">Dashboard</a>
         <a mat-button routerLink="/test-cases" routerLinkActive="active-link">Przypadki testowe</a>
         <a mat-button routerLink="/test-runs" routerLinkActive="active-link">Wykonania testów</a>
         <a mat-button routerLink="/reports" routerLinkActive="active-link">Raporty</a>
+        <a mat-button routerLink="/analytics" routerLinkActive="active-link">Analityka</a>
       </div>
-      
+
       <span class="spacer"></span>
-      
+
       <div class="search-container">
         <mat-icon>search</mat-icon>
         <input type="text" placeholder="Szukaj..." class="search-input">
       </div>
-      
-      <button mat-icon-button matBadge="3" matBadgeColor="accent" class="notification-button">
+
+      <button mat-icon-button [matMenuTriggerFor]="createMenu" matTooltip="Utwórz nowy">
+        <mat-icon>add</mat-icon>
+      </button>
+
+      <mat-menu #createMenu="matMenu">
+        <button mat-menu-item routerLink="/test-cases/create">
+          <mat-icon>note_add</mat-icon>
+          <span>Nowy przypadek testowy</span>
+        </button>
+        <button mat-menu-item routerLink="/test-runs/create">
+          <mat-icon>play_circle</mat-icon>
+          <span>Nowe wykonanie testów</span>
+        </button>
+        <button mat-menu-item routerLink="/reports/generate">
+          <mat-icon>assessment</mat-icon>
+          <span>Nowy raport</span>
+        </button>
+      </mat-menu>
+
+      <button mat-icon-button matBadge="3" matBadgeColor="accent" class="notification-button" [matMenuTriggerFor]="notificationsMenu">
         <mat-icon>notifications</mat-icon>
       </button>
-      
+
+      <mat-menu #notificationsMenu="matMenu" class="notifications-menu">
+        <div class="menu-header">
+          <h3>Powiadomienia</h3>
+          <button mat-button color="primary">Oznacz jako przeczytane</button>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="notifications-list">
+          <button mat-menu-item class="notification-item unread">
+            <div class="notification-icon test-run">
+              <mat-icon>play_circle</mat-icon>
+            </div>
+            <div class="notification-content">
+              <div class="notification-message">Wykonanie testu "Testy modułu płatności" zostało zakończone</div>
+              <div class="notification-date">12 mar 2025, 11:30</div>
+            </div>
+          </button>
+
+          <button mat-menu-item class="notification-item unread">
+            <div class="notification-icon defect">
+              <mat-icon>bug_report</mat-icon>
+            </div>
+            <div class="notification-content">
+              <div class="notification-message">Nowy błąd: "Błąd podczas przetwarzania płatności kartą"</div>
+              <div class="notification-date">10 mar 2025, 11:05</div>
+            </div>
+          </button>
+
+          <button mat-menu-item class="notification-item">
+            <div class="notification-icon system">
+              <mat-icon>settings</mat-icon>
+            </div>
+            <div class="notification-content">
+              <div class="notification-message">Zaplanowany przegląd techniczny systemu w dniu 15 marca</div>
+              <div class="notification-date">9 mar 2025, 09:15</div>
+            </div>
+          </button>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="menu-footer">
+          <button mat-button routerLink="/profile" [queryParams]="{tab: 'notifications'}">
+            Wszystkie powiadomienia
+          </button>
+        </div>
+      </mat-menu>
+
       <button mat-icon-button (click)="themeService.toggleDarkMode()">
-        <mat-icon>{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+        <mat-icon>{{ themeService.isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
-      
+
       <button mat-button [matMenuTriggerFor]="userMenu" class="user-button">
         <div class="avatar">JK</div>
         <span class="username">Jan Kowalski</span>
         <mat-icon>arrow_drop_down</mat-icon>
       </button>
-      
+
       <mat-menu #userMenu="matMenu">
-        <button mat-menu-item>
+        <button mat-menu-item routerLink="/profile">
           <mat-icon>person</mat-icon>
           <span>Mój profil</span>
         </button>
-        <button mat-menu-item>
+        <button mat-menu-item routerLink="/settings/project">
           <mat-icon>settings</mat-icon>
           <span>Ustawienia</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item>
+          <mat-icon>help</mat-icon>
+          <span>Pomoc</span>
+        </button>
+        <button mat-menu-item>
+          <mat-icon>feedback</mat-icon>
+          <span>Zgłoś problem</span>
         </button>
         <mat-divider></mat-divider>
         <button mat-menu-item>
@@ -91,7 +169,8 @@ import { ThemeService } from '../../../core/services/theme.service';
       font-size: 20px;
       font-weight: 600;
       margin-right: 32px;
-      
+      cursor: pointer;
+
       .primary-text {
         color: #90caf9;
         margin-right: 4px;
@@ -100,16 +179,20 @@ import { ThemeService } from '../../../core/services/theme.service';
 
     .main-nav {
       display: flex;
-      
+
       a {
         margin: 0 4px;
         height: 36px;
         line-height: 36px;
         border-radius: 4px;
-        
+
         &.active-link {
           background-color: rgba(255, 255, 255, 0.1);
         }
+      }
+
+      @media (max-width: 992px) {
+        display: none;
       }
     }
 
@@ -125,23 +208,27 @@ import { ThemeService } from '../../../core/services/theme.service';
       padding: 0 12px;
       margin-right: 16px;
       height: 36px;
-      
+
       mat-icon {
         margin-right: 8px;
         opacity: 0.7;
       }
-      
+
       .search-input {
         background: transparent;
         border: none;
         outline: none;
         color: inherit;
         width: 180px;
-        
+
         &::placeholder {
           color: currentColor;
           opacity: 0.7;
         }
+      }
+
+      @media (max-width: 768px) {
+        display: none;
       }
     }
 
@@ -154,7 +241,7 @@ import { ThemeService } from '../../../core/services/theme.service';
       align-items: center;
       padding: 0 8px;
       margin-left: 8px;
-      
+
       .avatar {
         width: 32px;
         height: 32px;
@@ -167,9 +254,92 @@ import { ThemeService } from '../../../core/services/theme.service';
         font-size: 14px;
         margin-right: 8px;
       }
-      
+
       .username {
         margin-right: 4px;
+
+        @media (max-width: 600px) {
+          display: none;
+        }
+      }
+    }
+
+    ::ng-deep .notifications-menu {
+      max-width: 350px;
+
+      .mat-mdc-menu-content {
+        padding: 0;
+      }
+
+      .menu-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+
+        h3 {
+          font-size: 16px;
+          font-weight: 500;
+          margin: 0;
+        }
+      }
+
+      .notifications-list {
+        max-height: 320px;
+        overflow-y: auto;
+
+        .notification-item {
+          display: flex;
+          align-items: flex-start;
+          padding: 12px 16px;
+          height: auto;
+          min-height: 64px;
+
+          &.unread {
+            background-color: rgba(63, 81, 181, 0.05);
+
+            .dark-theme & {
+              background-color: rgba(63, 81, 181, 0.1);
+            }
+          }
+
+          .notification-icon {
+            margin-right: 12px;
+
+            &.test-run {
+              color: #2196f3;
+            }
+
+            &.defect {
+              color: #f44336;
+            }
+
+            &.system {
+              color: #ff9800;
+            }
+          }
+
+          .notification-content {
+            flex: 1;
+
+            .notification-message {
+              white-space: normal;
+              line-height: 1.4;
+            }
+
+            .notification-date {
+              font-size: 12px;
+              color: var(--text-secondary);
+              margin-top: 4px;
+            }
+          }
+        }
+      }
+
+      .menu-footer {
+        display: flex;
+        justify-content: center;
+        padding: 8px;
       }
     }
   `]
