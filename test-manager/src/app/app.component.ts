@@ -1,5 +1,5 @@
-import { Component, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, OnInit, PLATFORM_ID, Inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { NavigationComponent } from './shared/components/navigation/navigation.component';
@@ -21,7 +21,10 @@ import { ThemeService } from './core/services/theme.service';
       <app-navigation (sidebarToggled)="toggleSidenav()"></app-navigation>
 
       <mat-sidenav-container class="sidenav-container">
-        <app-sidebar [opened]="sidenavOpened()"></app-sidebar>
+        <!-- Właściwa implementacja mat-sidenav -->
+        <mat-sidenav [opened]="sidenavOpened()" mode="side" class="app-sidenav">
+          <app-sidebar></app-sidebar>
+        </mat-sidenav>
 
         <mat-sidenav-content class="sidenav-content-container">
           <div class="main-content">
@@ -46,22 +49,45 @@ import { ThemeService } from './core/services/theme.service';
     .main-content {
       padding: 24px;
     }
+
+    .app-sidenav {
+      width: 240px;
+    }
   `]
 })
 export class AppComponent implements OnInit {
   sidenavOpened = signal(true);
 
-  constructor(public themeService: ThemeService) {}
+  constructor(
+    public themeService: ThemeService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   ngOnInit() {
-    // Initialize theme on startup
-    const isDarkMode = this.themeService.isDarkMode();
-    if (isDarkMode) {
-      this.themeService.applyTheme(true);
+    if (isPlatformBrowser(this.platformId)) {
+      // Responsive sidenav behavior
+      this.handleResponsiveSidenav();
     }
   }
 
   toggleSidenav() {
     this.sidenavOpened.update(value => !value);
+  }
+
+  private handleResponsiveSidenav() {
+    // Close sidenav on small screens by default
+    const checkWidth = () => {
+      if (window.innerWidth < 768 && this.sidenavOpened()) {
+        this.sidenavOpened.set(false);
+      } else if (window.innerWidth >= 768 && !this.sidenavOpened()) {
+        this.sidenavOpened.set(true);
+      }
+    };
+
+    // Check on init
+    checkWidth();
+
+    // Listen for resize events
+    window.addEventListener('resize', checkWidth);
   }
 }

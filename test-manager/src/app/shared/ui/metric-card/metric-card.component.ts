@@ -30,72 +30,10 @@ import { MatIconModule } from '@angular/material/icon';
     </mat-card>
   `,
   styles: [`
-    .metric-card {
-      .metric-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-      }
-      
-      .metric-info {
-        .metric-label {
-          font-size: 14px;
-          color: var(--text-secondary);
-          margin-bottom: 8px;
-        }
-        
-        .metric-value {
-          font-size: 28px;
-          font-weight: 500;
-          margin-bottom: 8px;
-        }
-        
-        .metric-change {
-          font-size: 14px;
-          color: var(--text-secondary);
-          
-          span {
-            font-weight: 500;
-          }
-          
-          &.positive span {
-            color: var(--success-color);
-          }
-          
-          &.negative span {
-            color: var(--warn-color);
-          }
-        }
-      }
-      
-      .metric-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        
-        &.blue {
-          background-color: rgba(63, 81, 181, 0.1);
-          color: #3f51b5;
-        }
-        
-        &.red {
-          background-color: rgba(244, 67, 54, 0.1);
-          color: #f44336;
-        }
-        
-        &.purple {
-          background-color: rgba(156, 39, 176, 0.1);
-          color: #9c27b0;
-        }
-        
-        &.green {
-          background-color: rgba(76, 175, 80, 0.1);
-          color: #4caf50;
-        }
-      }
+    .metric-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
     }
   `]
 })

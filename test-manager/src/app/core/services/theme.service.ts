@@ -1,28 +1,30 @@
 import { Injectable, signal, PLATFORM_ID, Inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
+import { OverlayContainer } from '@angular/cdk/overlay';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ThemeService {
   private _darkMode = signal(false);
-  darkMode = this._darkMode.asReadonly();
+  readonly darkMode = this._darkMode.asReadonly();
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
-    @Inject(DOCUMENT) private document: Document
+    @Inject(DOCUMENT) private document: Document,
+    private overlayContainer: OverlayContainer
   ) {
-    // Always start with light theme class explicitly
     if (isPlatformBrowser(this.platformId)) {
-      this.applyTheme(false);
-
-      // Then check for saved preference
+      // Check for saved preference
       const savedTheme = localStorage.getItem('theme');
-      if (savedTheme === 'dark') {
-        this._darkMode.set(true);
-        this.applyTheme(true);
-      }
+
+      const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initialDarkMode = savedTheme === 'dark' ||
+        (savedTheme === null && prefersDarkMode);
+
+      this._darkMode.set(initialDarkMode);
+      this.applyTheme(initialDarkMode);
     }
   }
 
@@ -42,19 +44,24 @@ export class ThemeService {
       return; // Skip DOM manipulation on server
     }
 
-    const rootElement = this.document.documentElement;
     const bodyElement = this.document.body;
+    const htmlElement = this.document.documentElement;
+    const overlayContainerElement = this.overlayContainer.getContainerElement();
 
     if (isDark) {
-      rootElement.classList.add('dark-theme');
-      rootElement.classList.remove('light-theme');
       bodyElement.classList.add('dark-theme');
       bodyElement.classList.remove('light-theme');
+      htmlElement.classList.add('dark-theme');
+      htmlElement.classList.remove('light-theme');
+      overlayContainerElement.classList.add('dark-theme');
+      overlayContainerElement.classList.remove('light-theme');
     } else {
-      rootElement.classList.add('light-theme');
-      rootElement.classList.remove('dark-theme');
       bodyElement.classList.add('light-theme');
       bodyElement.classList.remove('dark-theme');
+      htmlElement.classList.add('light-theme');
+      htmlElement.classList.remove('dark-theme');
+      overlayContainerElement.classList.add('light-theme');
+      overlayContainerElement.classList.remove('dark-theme');
     }
   }
 

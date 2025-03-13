@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
@@ -20,11 +21,12 @@ import { ThemeService } from '../../../core/services/theme.service';
     MatIconModule,
     MatMenuModule,
     MatBadgeModule,
-    MatDividerModule
+    MatDividerModule,
+    MatTooltipModule
   ],
   template: `
     <mat-toolbar color="primary" class="app-toolbar">
-      <button mat-icon-button (click)="sidebarToggled.emit()">
+      <button mat-icon-button (click)="sidebarToggled.emit()" matTooltip="Przełącz panel boczny">
         <mat-icon>menu</mat-icon>
       </button>
 
@@ -67,7 +69,8 @@ import { ThemeService } from '../../../core/services/theme.service';
         </button>
       </mat-menu>
 
-      <button mat-icon-button matBadge="3" matBadgeColor="accent" class="notification-button" [matMenuTriggerFor]="notificationsMenu">
+      <button mat-icon-button matBadge="3" matBadgeColor="accent" class="notification-button"
+              [matMenuTriggerFor]="notificationsMenu" matTooltip="Powiadomienia">
         <mat-icon>notifications</mat-icon>
       </button>
 
@@ -120,7 +123,7 @@ import { ThemeService } from '../../../core/services/theme.service';
         </div>
       </mat-menu>
 
-      <button mat-icon-button (click)="themeService.toggleDarkMode()">
+      <button mat-icon-button (click)="themeService.toggleDarkMode()" matTooltip="Zmień motyw">
         <mat-icon>{{ themeService.isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
 
@@ -172,7 +175,7 @@ import { ThemeService } from '../../../core/services/theme.service';
       cursor: pointer;
 
       .primary-text {
-        color: #90caf9;
+        color: #90caf9; // Light blue accent for logo
         margin-right: 4px;
       }
     }
@@ -247,7 +250,7 @@ import { ThemeService } from '../../../core/services/theme.service';
         height: 32px;
         border-radius: 50%;
         background-color: #90caf9;
-        color: white;
+        color: var(--on-primary);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -296,10 +299,10 @@ import { ThemeService } from '../../../core/services/theme.service';
           min-height: 64px;
 
           &.unread {
-            background-color: rgba(63, 81, 181, 0.05);
+            background-color: rgba(var(--primary-rgb), 0.05);
 
             .dark-theme & {
-              background-color: rgba(63, 81, 181, 0.1);
+              background-color: rgba(var(--primary-rgb), 0.1);
             }
           }
 
@@ -307,15 +310,15 @@ import { ThemeService } from '../../../core/services/theme.service';
             margin-right: 12px;
 
             &.test-run {
-              color: #2196f3;
+              color: var(--primary);
             }
 
             &.defect {
-              color: #f44336;
+              color: var(--error);
             }
 
             &.system {
-              color: #ff9800;
+              color: var(--warning);
             }
           }
 
@@ -329,7 +332,7 @@ import { ThemeService } from '../../../core/services/theme.service';
 
             .notification-date {
               font-size: 12px;
-              color: var(--text-secondary);
+              color: var(--on-surface-medium);
               margin-top: 4px;
             }
           }
