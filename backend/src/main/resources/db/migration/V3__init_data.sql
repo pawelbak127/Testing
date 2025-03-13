@@ -1,0 +1,2 @@
+INSERT INTO users (login, password, email, first, last, locale, active, creation_ts, expiration_date)
+	VALUES ('user', '$2a$12$8PTE3l3aO7IFt9JepJnvwulZ7ZeItSBUTnE6bYcSFUB0VGBCxRpgu', 'test@test.com', '', '', '', true, '2025-01-01 08:00:00', '2026-01-01 08:00:00');
