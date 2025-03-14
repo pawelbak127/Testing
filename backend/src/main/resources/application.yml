@@ -2,4 +2,9 @@ spring:
   application:
     name: TestManagement
   profiles:
-    active: dev
+    active: dev-local
+server:
+  port: 8080
+jwt:
+  expiration-time: 3600000
+  secret-key: Smt3dWRyTDdXUEYzd3hTOWpIWG9GMUsrSzVOWHdRek42V1FjU1VrdXJZMmZ1aVpLWkN2b3p5MWNlTmhjM21XeQ==

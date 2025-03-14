@@ -10,7 +10,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5431:5432"
 
   pgadmin:
     image: dpage/pgadmin4
@@ -25,6 +25,7 @@ services:
   backend:
     build:
       context: ./backend
+    profiles: [backend]
     container_name: backend
     restart: always
     environment:
@@ -37,14 +38,13 @@ services:
   frontend:
     build:
       context: ./frontend
+    profiles: [frontend]
     container_name: frontend
     restart: always
     environment:
       NODE_ENV: ${NODE_ENV}
     ports:
       - "4200:80"
-    depends_on:
-      - backend
 
 volumes:
   postgres_data:
