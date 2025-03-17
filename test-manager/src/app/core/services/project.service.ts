@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { ApiService } from './api.service';
+import { tap } from 'rxjs/operators';
 
 export interface Project {
   id: string;
@@ -12,14 +14,32 @@ export interface Project {
   providedIn: 'root'
 })
 export class ProjectService {
-  private projects: Project[] = [
-    { id: 'proj-1', name: 'Portal klienta', color: 'green', description: 'Aplikacja internetowa dla klientów' },
-    { id: 'proj-2', name: 'Aplikacja mobilna', color: 'purple', description: 'Aplikacja na iOS i Android' },
-    { id: 'proj-3', name: 'Backend API', color: 'blue', description: 'REST API dla wszystkich aplikacji' }
-  ];
+  private projects: Project[] = [];
   
-  private projectsSubject = new BehaviorSubject<Project[]>(this.projects);
-  private selectedProjectSubject = new BehaviorSubject<Project | null>(this.projects[0]);
+  private projectsSubject = new BehaviorSubject<Project[]>([]);
+  private selectedProjectSubject = new BehaviorSubject<Project | null>(null);
+  
+  constructor(private apiService: ApiService) {
+    // Load projects from API when service is initialized
+    this.loadProjects();
+  }
+  
+  private loadProjects(): void {
+    this.apiService.getProjects().subscribe(
+      (projects) => {
+        this.projects = projects;
+        this.projectsSubject.next(this.projects);
+        
+        // Set first project as selected if there is one and none is currently selected
+        if (this.projects.length > 0 && !this.selectedProjectSubject.value) {
+          this.selectedProjectSubject.next(this.projects[0]);
+        }
+      },
+      (error) => {
+        console.error('Error loading projects:', error);
+      }
+    );
+  }
   
   get projects$(): Observable<Project[]> {
     return this.projectsSubject.asObservable();
@@ -35,35 +55,52 @@ export class ProjectService {
   }
   
   addProject(project: Omit<Project, 'id'>): void {
-    const newProject = {
-      ...project,
-      id: `proj-${this.projects.length + 1}`
-    };
-    this.projects = [...this.projects, newProject];
-    this.projectsSubject.next(this.projects);
+    this.apiService.createProject(project).subscribe(
+      (newProject) => {
+        this.projects = [...this.projects, newProject];
+        this.projectsSubject.next(this.projects);
+      },
+      (error) => {
+        console.error('Error creating project:', error);
+      }
+    );
   }
   
   updateProject(id: string, project: Partial<Project>): void {
-    this.projects = this.projects.map(p => 
-      p.id === id ? { ...p, ...project } : p
+    this.apiService.updateProject(id, project).subscribe(
+      (updatedProject) => {
+        this.projects = this.projects.map(p => 
+          p.id === id ? { ...p, ...updatedProject } : p
+        );
+        this.projectsSubject.next(this.projects);
+        
+        // Update selected project if it's the one being updated
+        const currentSelected = this.selectedProjectSubject.value;
+        if (currentSelected && currentSelected.id === id) {
+          this.selectedProjectSubject.next({ ...currentSelected, ...updatedProject });
+        }
+      },
+      (error) => {
+        console.error('Error updating project:', error);
+      }
     );
-    this.projectsSubject.next(this.projects);
-    
-    // Jeśli aktualizujemy aktualnie wybrany projekt, aktualizujemy też selectedProject
-    const currentSelected = this.selectedProjectSubject.value;
-    if (currentSelected && currentSelected.id === id) {
-      this.selectedProjectSubject.next({ ...currentSelected, ...project });
-    }
   }
   
   deleteProject(id: string): void {
-    this.projects = this.projects.filter(p => p.id !== id);
-    this.projectsSubject.next(this.projects);
-    
-    // Jeśli usuwamy aktualnie wybrany projekt, resetujemy wybór
-    const currentSelected = this.selectedProjectSubject.value;
-    if (currentSelected && currentSelected.id === id) {
-      this.selectedProjectSubject.next(this.projects[0] || null);
-    }
+    this.apiService.deleteProject(id).subscribe(
+      () => {
+        this.projects = this.projects.filter(p => p.id !== id);
+        this.projectsSubject.next(this.projects);
+        
+        // Reset selection if the deleted project was selected
+        const currentSelected = this.selectedProjectSubject.value;
+        if (currentSelected && currentSelected.id === id) {
+          this.selectedProjectSubject.next(this.projects[0] || null);
+        }
+      },
+      (error) => {
+        console.error('Error deleting project:', error);
+      }
+    );
   }
 }

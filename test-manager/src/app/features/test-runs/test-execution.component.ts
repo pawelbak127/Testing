@@ -14,7 +14,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { StatusChipComponent } from '../../shared/ui/status-chip/status-chip.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
 import { ApiService } from '../../core/services/api.service';
 import { TestCase } from '../../core/models/test-case.model';
@@ -47,7 +46,6 @@ interface TestStep {
     MatDividerModule,
     MatDialogModule,
     MatSnackBarModule,
-    StatusChipComponent,
     PageHeaderComponent
   ],
   template: `

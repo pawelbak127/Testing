@@ -1,59 +1,84 @@
-# TestManager
+# Test Manager Application
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.1.
+A comprehensive application for managing test cases, test runs, and reports.
 
-## Development server
+## Architecture
 
-To start a local development server, run:
+The application consists of two main components:
 
-```bash
-ng serve
-```
+1. **Frontend**: Angular application
+2. **Backend**: JSON Server REST API
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Prerequisites
 
-## Code scaffolding
+- Node.js 18 or higher
+- npm 9 or higher
+- Docker and Docker Compose (optional, for containerized deployment)
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Development Setup
 
-```bash
-ng generate component component-name
-```
+### Backend
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+1. Navigate to the backend directory:
+   ```
+   cd backend
+   ```
 
-```bash
-ng generate --help
-```
+2. Install dependencies:
+   ```
+   npm install
+   ```
 
-## Building
+3. Run the application:
+   ```
+   node server.js
+   ```
 
-To build the project run:
+   The backend will be available at http://localhost:8080/api
 
-```bash
-ng build
-```
+### Frontend
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+1. Navigate to the root directory and install dependencies:
+   ```
+   npm install
+   ```
 
-## Running unit tests
+2. Start the development server:
+   ```
+   npm start
+   ```
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+   The frontend will be available at http://localhost:4200
 
-```bash
-ng test
-```
+## Docker Deployment
 
-## Running end-to-end tests
+To run the entire application using Docker:
 
-For end-to-end (e2e) testing, run:
+1. Build and start the containers:
+   ```
+   docker-compose up -d
+   ```
 
-```bash
-ng e2e
-```
+2. Access the application at http://localhost:4200
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+3. To stop the containers:
+   ```
+   docker-compose down
+   ```
 
-## Additional Resources
+## API Documentation
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+The backend API provides the following endpoints:
+
+- `/api/projects` - CRUD operations for projects
+- `/api/testCases` - CRUD operations for test cases
+- `/api/testRuns` - CRUD operations for test runs
+- `/api/reports` - CRUD operations for reports
+
+## Features
+
+- Project management
+- Test case creation and management
+- Test run execution and tracking
+- Report generation
+- Dashboard with analytics

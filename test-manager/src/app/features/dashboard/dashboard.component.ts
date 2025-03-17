@@ -6,7 +6,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
-import { StatusChipComponent } from '../../shared/ui/status-chip/status-chip.component';
 import { MetricCardComponent } from '../../shared/ui/metric-card/metric-card.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
 
@@ -21,7 +20,6 @@ import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.com
     MatFormFieldModule,
     MatSelectModule,
     FormsModule,
-    StatusChipComponent,
     MetricCardComponent,
     PageHeaderComponent
   ],

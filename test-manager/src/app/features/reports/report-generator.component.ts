@@ -16,7 +16,6 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
-import { StatusChipComponent } from '../../shared/ui/status-chip/status-chip.component';
 import { ProjectService, Project } from '../../core/services/project.service';
 import { ApiService } from '../../core/services/api.service';
 import { TestRun } from '../../core/models/test-run.model';
@@ -41,8 +40,7 @@ import { TestRun } from '../../core/models/test-run.model';
     MatSnackBarModule,
     MatTabsModule,
     MatExpansionModule,
-    PageHeaderComponent,
-    StatusChipComponent
+    PageHeaderComponent
   ],
   template: `
     <div class="report-generator-container">
