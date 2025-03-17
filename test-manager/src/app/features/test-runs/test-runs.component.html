@@ -1,0 +1,117 @@
+<div class="test-runs-container">
+  <app-page-header title="Wykonania testów">
+    <button mat-flat-button color="primary">
+      <mat-icon>add</mat-icon>
+      <span>Nowe wykonanie</span>
+    </button>
+  </app-page-header>
+  
+  <div class="test-runs-grid">
+    <mat-card class="test-runs-card">
+      <mat-card-header>
+        <mat-card-title>Testy w toku</mat-card-title>
+        <div class="header-badge accent">{{ activeRuns.length }} aktywne</div>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let run of activeRuns" [expanded]="run.id === 'TR-007'">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{ run.id }}: {{ run.name }}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            
+            <div class="test-run-details">
+              <div class="project-name">{{ run.project }}</div>
+              
+              <div class="progress-container">
+                <div class="progress-label">Postęp:</div>
+                <mat-progress-bar mode="determinate" [value]="run.progress?.percentage"></mat-progress-bar>
+                <div class="progress-stats">{{ run.progress?.current }}/{{ run.progress?.total }}</div>
+              </div>
+              
+              <div class="actions">
+                <button mat-stroked-button color="primary">Kontynuuj</button>
+                <button mat-button>Szczegóły</button>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </mat-card-content>
+    </mat-card>
+    
+    <mat-card class="test-runs-card">
+      <mat-card-header>
+        <mat-card-title>Ukończone testy</mat-card-title>
+        <div class="header-badge success">{{ completedRuns.length }} ukończone</div>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let run of completedRuns">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{ run.id }}: {{ run.name }}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            
+            <div class="test-run-details">
+              <div class="project-name">{{ run.project }}</div>
+              
+              <div class="results-container">
+                <app-status-chip 
+                  [text]="run.results?.success + ' sukcesów'" 
+                  color="success">
+                </app-status-chip>
+                
+                <app-status-chip 
+                  [text]="run.results?.errors + ' błędów'" 
+                  color="warn">
+                </app-status-chip>
+              </div>
+              
+              <div class="actions">
+                <button mat-stroked-button color="primary">Raport</button>
+                <button mat-button>Szczegóły</button>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </mat-card-content>
+    </mat-card>
+    
+    <mat-card class="test-runs-card">
+      <mat-card-header>
+        <mat-card-title>Zaplanowane testy</mat-card-title>
+        <div class="header-badge primary">{{ scheduledRuns.length }} zaplanowane</div>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let run of scheduledRuns">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{ run.id }}: {{ run.name }}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            
+            <div class="test-run-details">
+              <div class="project-name">{{ run.project }}</div>
+              
+              <div class="schedule-container">
+                <div class="schedule-label">Start:</div>
+                <div>{{ run.date }}</div>
+              </div>
+              
+              <div class="actions">
+                <button mat-stroked-button color="primary">Edytuj</button>
+                <button mat-button>Szczegóły</button>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

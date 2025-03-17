@@ -1,0 +1,26 @@
+<div class="reports-container">
+  <app-page-header title="Raporty">
+    <button mat-flat-button color="primary">
+      <mat-icon>add</mat-icon>
+      <span>Generuj raport</span>
+    </button>
+  </app-page-header>
+  
+  <div class="reports-grid">
+    <mat-card *ngFor="let report of reports" class="report-card">
+      <mat-card-content>
+        <div class="report-content">
+          <div class="report-info">
+            <h3 class="report-title">{{ report.title }}</h3>
+            <p class="report-project">{{ report.project }}</p>
+            <p class="report-date">Wygenerowany: {{ report.date }}</p>
+          </div>
+          
+          <div class="report-icon" [ngClass]="report.color">
+            <mat-icon>{{ report.icon }}</mat-icon>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

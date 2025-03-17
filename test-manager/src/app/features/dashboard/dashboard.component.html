@@ -1,0 +1,105 @@
+<div class="dashboard-container">
+  <app-page-header title="Dashboard">
+    <button mat-stroked-button class="filter-button">
+      <mat-icon>filter_list</mat-icon>
+      <span>Filtry</span>
+    </button>
+
+    <div class="view-toggle">
+      <button mat-icon-button class="view-toggle-button active">
+        <mat-icon>grid_view</mat-icon>
+      </button>
+      <button mat-icon-button class="view-toggle-button">
+        <mat-icon>view_list</mat-icon>
+      </button>
+    </div>
+  </app-page-header>
+
+  <div class="metrics-cards">
+    <app-metric-card
+      label="Wykonane testy"
+      value="1,234"
+      change="+12%"
+      changeLabel="od zeszłego tygodnia"
+      changeType="positive"
+      icon="check_circle"
+      color="blue">
+    </app-metric-card>
+
+    <app-metric-card
+      label="Błędy"
+      value="45"
+      change="+5%"
+      changeLabel="od zeszłego tygodnia"
+      changeType="negative"
+      icon="error"
+      color="red">
+    </app-metric-card>
+
+    <app-metric-card
+      label="Czas testowania"
+      value="87.5h"
+      change="-3%"
+      changeLabel="od zeszłego tygodnia"
+      changeType="positive"
+      icon="schedule"
+      color="purple">
+    </app-metric-card>
+
+    <app-metric-card
+      label="Skuteczność"
+      value="92.3%"
+      change="+2.3%"
+      changeLabel="od zeszłego tygodnia"
+      changeType="positive"
+      icon="bar_chart"
+      color="green">
+    </app-metric-card>
+  </div>
+
+  <div class="charts-container">
+    <mat-card class="chart-card large">
+      <mat-card-content>
+        <div class="chart-header">
+          <h2 class="chart-title">Status wykonania testów</h2>
+
+          <mat-form-field appearance="outline" class="time-range-selector">
+            <mat-select [(value)]="selectedTimeRange">
+              <mat-option *ngFor="let option of timeRangeOptions" [value]="option">
+                {{ option }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="chart-placeholder">
+          [Tutaj wykres statusu testów]
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-content>
+        <div class="chart-header">
+          <h2 class="chart-title">Najnowsze testy</h2>
+          <a class="see-all-link" mat-button routerLink="/test-runs">Zobacz wszystkie</a>
+        </div>
+
+        <div class="recent-tests-list">
+          <mat-card *ngFor="let test of recentTests" class="recent-test-item">
+            <div class="test-header">
+              <span class="test-name">{{ test.name }}</span>
+              <span class="test-status" [ngClass]="test.status">
+                {{ test.status === 'success' ? 'Sukces' :
+                   test.status === 'error' ? 'Błąd' : 'W toku' }}
+              </span>
+            </div>
+            <div class="test-details">
+              {{ test.project }} • {{ test.time }}
+            </div>
+          </mat-card>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,204 @@
+{
+  "projects": [
+    {
+      "id": "proj-1",
+      "name": "Portal klienta",
+      "color": "green",
+      "description": "Aplikacja internetowa dla klientów"
+    },
+    {
+      "id": "proj-2",
+      "name": "Aplikacja mobilna",
+      "color": "purple",
+      "description": "Aplikacja na iOS i Android"
+    },
+    {
+      "id": "proj-3",
+      "name": "Backend API",
+      "color": "blue",
+      "description": "REST API dla wszystkich aplikacji"
+    }
+  ],
+  "testCases": [
+    {
+      "id": "TC-001",
+      "name": "Logowanie użytkownika z poprawnymi danymi",
+      "project": {
+        "id": "proj-1",
+        "name": "Portal klienta",
+        "color": "green"
+      },
+      "priority": {
+        "level": "Wysoki",
+        "color": "warn"
+      },
+      "author": "Jan Kowalski",
+      "creationDate": "2025-03-10T10:00:00.000Z",
+      "status": {
+        "name": "Aktywny",
+        "color": "success"
+      }
+    },
+    {
+      "id": "TC-002",
+      "name": "Rejestracja nowego użytkownika",
+      "project": {
+        "id": "proj-1",
+        "name": "Portal klienta",
+        "color": "green"
+      },
+      "priority": {
+        "level": "Średni",
+        "color": "accent"
+      },
+      "author": "Anna Nowak",
+      "creationDate": "2025-03-08T10:00:00.000Z",
+      "status": {
+        "name": "Aktywny",
+        "color": "success"
+      }
+    },
+    {
+      "id": "TC-003",
+      "name": "Wyszukiwanie produktów według kategorii",
+      "project": {
+        "id": "proj-2",
+        "name": "Aplikacja mobilna",
+        "color": "purple"
+      },
+      "priority": {
+        "level": "Średni",
+        "color": "accent"
+      },
+      "author": "Piotr Wiśniewski",
+      "creationDate": "2025-03-07T10:00:00.000Z",
+      "status": {
+        "name": "W przeglądzie",
+        "color": "default"
+      }
+    },
+    {
+      "id": "TC-004",
+      "name": "Realizacja płatności kartą kredytową",
+      "project": {
+        "id": "proj-1",
+        "name": "Portal klienta",
+        "color": "green"
+      },
+      "priority": {
+        "level": "Wysoki",
+        "color": "warn"
+      },
+      "author": "Jan Kowalski",
+      "creationDate": "2025-03-05T10:00:00.000Z",
+      "status": {
+        "name": "Aktywny",
+        "color": "success"
+      }
+    },
+    {
+      "id": "TC-005",
+      "name": "Synchronizacja danych między aplikacjami",
+      "project": {
+        "id": "proj-3",
+        "name": "Backend API",
+        "color": "blue"
+      },
+      "priority": {
+        "level": "Niski",
+        "color": "primary"
+      },
+      "author": "Tomasz Kowalczyk",
+      "creationDate": "2025-03-02T10:00:00.000Z",
+      "status": {
+        "name": "Nieaktywny",
+        "color": "warn"
+      }
+    }
+  ],
+  "testRuns": [
+    {
+      "id": "TR-001",
+      "name": "Sprint 1 - Testy logowania",
+      "project": {
+        "id": "proj-1",
+        "name": "Portal klienta",
+        "color": "green"
+      },
+      "progress": {
+        "current": 8,
+        "total": 10,
+        "percentage": 80
+      },
+      "results": {
+        "success": 7,
+        "errors": 1
+      },
+      "date": "2025-03-15T10:00:00.000Z"
+    },
+    {
+      "id": "TR-002",
+      "name": "Sprint 2 - Testy rejestracji",
+      "project": {
+        "id": "proj-1",
+        "name": "Portal klienta",
+        "color": "green"
+      },
+      "progress": {
+        "current": 5,
+        "total": 5,
+        "percentage": 100
+      },
+      "results": {
+        "success": 5,
+        "errors": 0
+      },
+      "date": "2025-03-10T10:00:00.000Z"
+    },
+    {
+      "id": "TR-003",
+      "name": "Testy modułu płatności",
+      "project": {
+        "id": "proj-1",
+        "name": "Portal klienta",
+        "color": "green"
+      },
+      "progress": {
+        "current": 5,
+        "total": 5,
+        "percentage": 100
+      },
+      "results": {
+        "success": 3,
+        "errors": 2
+      },
+      "date": "2025-03-05T10:00:00.000Z"
+    }
+  ],
+  "reports": [
+    {
+      "id": "REP-001",
+      "title": "Raport z testów logowania",
+      "project": {
+        "id": "proj-1",
+        "name": "Portal klienta",
+        "color": "green"
+      },
+      "date": "2025-03-16T10:00:00.000Z",
+      "icon": "assessment",
+      "color": "green"
+    },
+    {
+      "id": "REP-002",
+      "title": "Raport z testów wydajnościowych",
+      "project": {
+        "id": "proj-3",
+        "name": "Backend API",
+        "color": "blue"
+      },
+      "date": "2025-03-12T10:00:00.000Z",
+      "icon": "speed",
+      "color": "blue"
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+<div class="test-cases-container">
+  <app-page-header title="Przypadki testowe">
+    <button mat-flat-button color="primary">
+      <mat-icon>add</mat-icon>
+      <span>Dodaj przypadek</span>
+    </button>
+  </app-page-header>
+  
+  <mat-card class="table-container">
+    <div class="table-header">
+      <div class="table-filters">
+        <button mat-stroked-button class="filter-button">
+          <mat-icon>filter_list</mat-icon>
+          <span>Filtry</span>
+        </button>
+        
+        <mat-form-field appearance="outline" class="project-selector">
+          <mat-select [(value)]="selectedProject">
+            <mat-option *ngFor="let project of projects" [value]="project">
+              {{ project }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Szukaj przypadków testowych..." (keyup)="applyFilter($event)">
+      </mat-form-field>
+    </div>
+    
+    <div class="mat-elevation-z0">
+      <table mat-table [dataSource]="dataSource" class="full-width-table">
+        <!-- ID Column -->
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef>ID</th>
+          <td mat-cell *matCellDef="let row">{{ row.id }}</td>
+        </ng-container>
+        
+        <!-- Name Column -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nazwa</th>
+          <td mat-cell *matCellDef="let row" class="name-cell">{{ row.name }}</td>
+        </ng-container>
+        
+        <!-- Project Column -->
+        <ng-container matColumnDef="project">
+          <th mat-header-cell *matHeaderCellDef>Projekt</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="project-indicator">
+              <div class="color-dot" [ngClass]="row.project.color"></div>
+              <span>{{ row.project.name }}</span>
+            </div>
+          </td>
+        </ng-container>
+        
+        <!-- Priority Column -->
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef>Priorytet</th>
+          <td mat-cell *matCellDef="let row">
+            <app-status-chip [text]="row.priority.level" [color]="row.priority.color"></app-status-chip>
+          </td>
+        </ng-container>
+        
+        <!-- Author Column -->
+        <ng-container matColumnDef="author">
+          <th mat-header-cell *matHeaderCellDef>Autor</th>
+          <td mat-cell *matCellDef="let row">{{ row.author }}</td>
+        </ng-container>
+        
+        <!-- Creation Date Column -->
+        <ng-container matColumnDef="creationDate">
+          <th mat-header-cell *matHeaderCellDef>Data utworzenia</th>
+          <td mat-cell *matCellDef="let row">{{ row.creationDate }}</td>
+        </ng-container>
+        
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let row">
+            <app-status-chip [text]="row.status.name" [color]="row.status.color"></app-status-chip>
+          </td>
+        </ng-container>
+        
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+      </table>
+      
+      <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    </div>
+  </mat-card>
+</div>

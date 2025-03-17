@@ -1,0 +1,124 @@
+.test-runs-container {
+  .test-runs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    
+    .test-runs-card {
+      .mat-mdc-card-header {
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        
+        .mat-mdc-card-title {
+          margin: 0;
+          font-size: 16px;
+          font-weight: 500;
+        }
+        
+        .header-badge {
+          margin-left: auto;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 12px;
+          
+          &.primary {
+            background-color: rgba(33, 150, 243, 0.1);
+            color: #2196f3;
+          }
+          
+          &.accent {
+            background-color: rgba(255, 152, 0, 0.1);
+            color: #ff9800;
+          }
+          
+          &.success {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+          }
+        }
+      }
+      
+      .mat-mdc-card-content {
+        padding: 0 16px 16px;
+        
+        .mat-expansion-panel {
+          margin-bottom: 12px;
+          box-shadow: none;
+          border: 1px solid rgba(0, 0, 0, 0.12);
+          
+          .dark-theme & {
+            border-color: rgba(255, 255, 255, 0.12);
+          }
+          
+          &.mat-expanded {
+            background-color: rgba(0, 0, 0, 0.02);
+            
+            .dark-theme & {
+              background-color: rgba(255, 255, 255, 0.03);
+            }
+          }
+          
+          .mat-expansion-panel-header {
+            .mat-expansion-panel-header-title {
+              font-weight: 500;
+            }
+          }
+          
+          .test-run-details {
+            padding: 0 16px 16px;
+            
+            .project-name {
+              margin-bottom: 12px;
+              color: var(--text-secondary);
+            }
+            
+            .progress-container {
+              display: flex;
+              align-items: center;
+              margin-bottom: 16px;
+              
+              .progress-label {
+                width: 60px;
+                font-size: 14px;
+                color: var(--text-secondary);
+              }
+              
+              .mat-progress-bar {
+                flex: 1;
+              }
+              
+              .progress-stats {
+                margin-left: 12px;
+                font-size: 14px;
+                color: var(--text-secondary);
+              }
+            }
+            
+            .results-container {
+              display: flex;
+              gap: 8px;
+              margin-bottom: 16px;
+            }
+            
+            .schedule-container {
+              display: flex;
+              margin-bottom: 16px;
+              font-size: 14px;
+              
+              .schedule-label {
+                width: 60px;
+                color: var(--text-secondary);
+              }
+            }
+            
+            .actions {
+              display: flex;
+              gap: 8px;
+            }
+          }
+        }
+      }
+    }
+  }
+}

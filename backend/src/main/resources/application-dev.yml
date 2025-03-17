@@ -14,6 +14,7 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+<<<<<<< HEAD
 server:
   port: 8080
 jwt:
@@ -22,3 +23,5 @@ jwt:
   secret-key: Smt3dWRyTDdXUEYzd3hTOWpIWG9GMUsrSzVOWHdRek42V1FjU1VrdXJZMmZ1aVpLWkN2b3p5MWNlTmhjM21XeQ==
 google:
   client-id: 588964522027-upoq1puqhmac9dvbft659rm8tjk2jk1f.apps.googleusercontent.com # Replace with your actual Client ID
+=======
+>>>>>>> cba3a7d1317e702395c171d76a4107dbafe12c0e
