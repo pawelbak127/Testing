@@ -1,13 +1,13 @@
 <div class="reports-container">
   <app-page-header title="Raporty">
-    <button mat-flat-button color="primary" routerLink="/reports/generate">
+    <button mat-flat-button color="primary">
       <mat-icon>add</mat-icon>
       <span>Generuj raport</span>
     </button>
   </app-page-header>
   
   <div class="reports-grid">
-    <mat-card *ngFor="let report of reports" class="report-card" [routerLink]="['/reports', 'view']">
+    <mat-card *ngFor="let report of reports" class="report-card">
       <mat-card-content>
         <div class="report-content">
           <div class="report-info">

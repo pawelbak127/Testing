@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -14,6 +15,7 @@ import { TestRun } from '../../core/models/test-run.model';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MatCardModule,
     MatExpansionModule,
     MatProgressBarModule,

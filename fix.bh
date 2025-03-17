@@ -1,0 +1,2994 @@
+#!/bin/bash
+set -e
+
+echo "Rozpoczynam naprawę aplikacji Test Manager..."
+
+# Katalog główny projektu (bieżący katalog)
+PROJECT_DIR="."
+
+# Wybór implementacji backendu - JSON Server (prostszy w konfiguracji)
+echo "1. Wybór implementacji backendu - JSON Server"
+
+# 1. Poprawienie konfiguracji CORS w backendzIE - server.js
+cat > ${PROJECT_DIR}/test-manager/backend/server.js << 'EOF'
+const jsonServer = require('json-server');
+const cors = require('cors');
+const server = jsonServer.create();
+const path = require('path');
+const router = jsonServer.router(path.join(__dirname, 'db.json'));
+const middlewares = jsonServer.defaults();
+
+// Set default middlewares (logger, static, cors and no-cache)
+server.use(middlewares);
+
+// Konfiguracja CORS - zezwolenie na żądania z różnych źródeł
+server.use(cors({
+  origin: '*',  // Zezwól wszystkim źródłom (w środowisku produkcyjnym należy to ograniczyć)
+  credentials: true
+}));
+
+// Add custom routes before JSON Server router
+server.get('/health', (req, res) => {
+  res.json({ status: 'UP' });
+});
+
+// Use default router
+server.use('/api', router);
+
+// Start server
+const PORT = process.env.PORT || 8080;
+server.listen(PORT, () => {
+  console.log(`JSON Server is running on port ${PORT}`);
+  console.log(`API is available at http://localhost:${PORT}/api`);
+});
+EOF
+
+# 2. Poprawienie usługi ApiService - zapewnienie poprawnej komunikacji z backendem
+cat > ${PROJECT_DIR}/test-manager/src/app/core/services/api.service.ts << 'EOF'
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { TestCase } from '../models/test-case.model';
+import { TestRun } from '../models/test-run.model';
+import { Report } from '../models/report.model';
+import { environment } from '../../../environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ApiService {
+  // Używamy zmiennej środowiskowej dla URL API, co pozwala na łatwą zmianę w zależności od środowiska
+  private apiUrl = environment.apiUrl;
+  
+  constructor(private http: HttpClient) {
+    console.log('API URL:', this.apiUrl);
+  }
+  
+  // Metody projektu
+  getProjects(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/projects`).pipe(
+      catchError(this.handleError<any[]>('getProjects', []))
+    );
+  }
+  
+  getProjectById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/projects/${id}`).pipe(
+      catchError(this.handleError<any>('getProjectById'))
+    );
+  }
+  
+  createProject(project: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/projects`, project).pipe(
+      catchError(this.handleError<any>('createProject'))
+    );
+  }
+  
+  updateProject(id: string, project: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/projects/${id}`, project).pipe(
+      catchError(this.handleError<any>('updateProject'))
+    );
+  }
+  
+  deleteProject(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/projects/${id}`).pipe(
+      catchError(this.handleError<void>('deleteProject'))
+    );
+  }
+  
+  // Metody TestCase
+  getTestCases(): Observable<TestCase[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/testCases`).pipe(
+      map(testCases => testCases.map(tc => this.mapTestCase(tc))),
+      catchError(this.handleError<TestCase[]>('getTestCases', []))
+    );
+  }
+  
+  getTestCaseById(id: string): Observable<TestCase> {
+    return this.http.get<any>(`${this.apiUrl}/testCases/${id}`).pipe(
+      map(tc => this.mapTestCase(tc)),
+      catchError(this.handleError<TestCase>('getTestCaseById'))
+    );
+  }
+  
+  createTestCase(testCase: Partial<TestCase>): Observable<TestCase> {
+    return this.http.post<any>(`${this.apiUrl}/testCases`, testCase).pipe(
+      map(tc => this.mapTestCase(tc)),
+      catchError(this.handleError<TestCase>('createTestCase'))
+    );
+  }
+  
+  updateTestCase(id: string, testCase: Partial<TestCase>): Observable<TestCase> {
+    return this.http.put<any>(`${this.apiUrl}/testCases/${id}`, testCase).pipe(
+      map(tc => this.mapTestCase(tc)),
+      catchError(this.handleError<TestCase>('updateTestCase'))
+    );
+  }
+  
+  deleteTestCase(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/testCases/${id}`).pipe(
+      catchError(this.handleError<void>('deleteTestCase'))
+    );
+  }
+  
+  // Metody TestRun
+  getTestRuns(): Observable<TestRun[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/testRuns`).pipe(
+      map(testRuns => testRuns.map(tr => this.mapTestRun(tr))),
+      catchError(this.handleError<TestRun[]>('getTestRuns', []))
+    );
+  }
+  
+  getTestRunById(id: string): Observable<TestRun> {
+    return this.http.get<any>(`${this.apiUrl}/testRuns/${id}`).pipe(
+      map(tr => this.mapTestRun(tr)),
+      catchError(this.handleError<TestRun>('getTestRunById'))
+    );
+  }
+  
+  createTestRun(testRun: Partial<TestRun>): Observable<TestRun> {
+    return this.http.post<any>(`${this.apiUrl}/testRuns`, testRun).pipe(
+      map(tr => this.mapTestRun(tr)),
+      catchError(this.handleError<TestRun>('createTestRun'))
+    );
+  }
+  
+  updateTestRun(id: string, testRun: Partial<TestRun>): Observable<TestRun> {
+    return this.http.put<any>(`${this.apiUrl}/testRuns/${id}`, testRun).pipe(
+      map(tr => this.mapTestRun(tr)),
+      catchError(this.handleError<TestRun>('updateTestRun'))
+    );
+  }
+  
+  deleteTestRun(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/testRuns/${id}`).pipe(
+      catchError(this.handleError<void>('deleteTestRun'))
+    );
+  }
+  
+  // Metody Report
+  getReports(): Observable<Report[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/reports`).pipe(
+      map(reports => reports.map(r => this.mapReport(r))),
+      catchError(this.handleError<Report[]>('getReports', []))
+    );
+  }
+  
+  getReportById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/reports/${id}`).pipe(
+      catchError(this.handleError<any>('getReportById'))
+    );
+  }
+  
+  createReport(report: Partial<Report>): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/reports`, report).pipe(
+      catchError(this.handleError<any>('createReport'))
+    );
+  }
+  
+  updateReport(id: string, report: Partial<Report>): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/reports/${id}`, report).pipe(
+      catchError(this.handleError<any>('updateReport'))
+    );
+  }
+  
+  deleteReport(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/reports/${id}`).pipe(
+      catchError(this.handleError<void>('deleteReport'))
+    );
+  }
+
+  // Pomocnicze metody mapowania danych
+  private mapTestCase(tc: any): TestCase {
+    return {
+      id: tc.id || '',
+      name: tc.name || '',
+      project: { 
+        name: tc.project?.name || 'Nieznany projekt', 
+        color: tc.project?.color || 'blue' 
+      },
+      priority: { 
+        level: tc.priority?.level || 'Średni', 
+        color: tc.priority?.color || 'accent' 
+      },
+      author: tc.author || 'Nieznany',
+      creationDate: tc.creationDate ? new Date(tc.creationDate).toLocaleDateString() : '',
+      status: { 
+        name: tc.status?.name || 'Aktywny', 
+        color: tc.status?.color || 'success' 
+      }
+    };
+  }
+
+  private mapTestRun(tr: any): TestRun {
+    return {
+      id: tr.id || '',
+      name: tr.name || '',
+      project: tr.project?.name || 'Nieznany projekt',
+      progress: tr.progress ? {
+        current: tr.progress.current,
+        total: tr.progress.total,
+        percentage: tr.progress.percentage
+      } : undefined,
+      results: tr.results ? {
+        success: tr.results.success,
+        errors: tr.results.errors
+      } : undefined,
+      date: tr.date ? new Date(tr.date).toLocaleDateString() : undefined
+    };
+  }
+
+  private mapReport(r: any): Report {
+    return {
+      title: r.title || '',
+      project: r.project?.name || 'Wszystkie projekty',
+      date: r.date ? new Date(r.date).toLocaleDateString() : '',
+      icon: r.icon || 'assessment',
+      color: r.color || 'primary'
+    };
+  }
+
+  // Obsługa błędów HTTP
+  private handleError<T>(operation = 'operation', result?: T) {
+    return (error: any): Observable<T> => {
+      console.error(`${operation} failed:`, error);
+      
+      // Pozwól aplikacji działać dalej, zwracając pusty wynik
+      return of(result as T);
+    };
+  }
+}
+EOF
+
+# 3. Dodanie pliku środowiskowego dla różnych środowisk
+mkdir -p ${PROJECT_DIR}/test-manager/src/environments
+
+cat > ${PROJECT_DIR}/test-manager/src/environments/environment.ts << 'EOF'
+// Środowisko developerskie
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:8080/api'
+};
+EOF
+
+cat > ${PROJECT_DIR}/test-manager/src/environments/environment.prod.ts << 'EOF'
+// Środowisko produkcyjne
+export const environment = {
+  production: true,
+  apiUrl: '/api'  // Względny URL dla środowiska produkcyjnego, używany w kontenerze
+};
+EOF
+
+# 4. Poprawa konfiguracji Dockera
+cat > ${PROJECT_DIR}/test-manager/docker-compose.yml << 'EOF'
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - test-manager-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - test-manager-network
+
+networks:
+  test-manager-network:
+    driver: bridge
+EOF
+
+# 5. Poprawa konfiguracji nginx dla frontendu
+cat > ${PROJECT_DIR}/test-manager/nginx.conf << 'EOF'
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Kompresja plików
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+    # Ustawienia buforowania
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000";
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Proxy API requests to the backend
+    location /api/ {
+        proxy_pass http://backend:8080/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Timeout settings
+        proxy_connect_timeout 300;
+        proxy_send_timeout 300;
+        proxy_read_timeout 300;
+        send_timeout 300;
+    }
+
+    # Logging
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+}
+EOF
+
+# 6. Zaimplementowanie brakujących komponentów
+
+# 6.1. Implementacja komponentu TestStatusChart
+mkdir -p ${PROJECT_DIR}/test-manager/src/app/features/dashboard/components/test-status-chart
+
+cat > ${PROJECT_DIR}/test-manager/src/app/features/dashboard/dashboard.component.html << 'EOF'
+<div class="dashboard-container">
+  <app-page-header title="Dashboard">
+    <button mat-stroked-button class="filter-button">
+      <mat-icon>filter_list</mat-icon>
+      <span>Filtry</span>
+    </button>
+
+    <div class="view-toggle">
+      <button mat-icon-button class="view-toggle-button active">
+        <mat-icon>grid_view</mat-icon>
+      </button>
+      <button mat-icon-button class="view-toggle-button">
+        <mat-icon>view_list</mat-icon>
+      </button>
+    </div>
+  </app-page-header>
+
+  <div class="metrics-cards">
+    <app-metric-card
+      label="Wykonane testy"
+      value="1,234"
+      change="+12%"
+      changeLabel="od zeszłego tygodnia"
+      changeType="positive"
+      icon="check_circle"
+      color="blue">
+    </app-metric-card>
+
+    <app-metric-card
+      label="Błędy"
+      value="45"
+      change="+5%"
+      changeLabel="od zeszłego tygodnia"
+      changeType="negative"
+      icon="error"
+      color="red">
+    </app-metric-card>
+
+    <app-metric-card
+      label="Czas testowania"
+      value="87.5h"
+      change="-3%"
+      changeLabel="od zeszłego tygodnia"
+      changeType="positive"
+      icon="schedule"
+      color="purple">
+    </app-metric-card>
+
+    <app-metric-card
+      label="Skuteczność"
+      value="92.3%"
+      change="+2.3%"
+      changeLabel="od zeszłego tygodnia"
+      changeType="positive"
+      icon="bar_chart"
+      color="green">
+    </app-metric-card>
+  </div>
+
+  <div class="charts-container">
+    <mat-card class="chart-card large">
+      <mat-card-content>
+        <app-test-status-chart></app-test-status-chart>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-content>
+        <div class="chart-header">
+          <h2 class="chart-title">Najnowsze testy</h2>
+          <a class="see-all-link" mat-button routerLink="/test-runs">Zobacz wszystkie</a>
+        </div>
+
+        <div class="recent-tests-list">
+          <mat-card *ngFor="let test of recentTests" class="recent-test-item">
+            <div class="test-header">
+              <span class="test-name">{{ test.name }}</span>
+              <span class="test-status" [ngClass]="test.status">
+                {{ test.status === 'success' ? 'Sukces' :
+                   test.status === 'error' ? 'Błąd' : 'W toku' }}
+              </span>
+            </div>
+            <div class="test-details">
+              {{ test.project }} • {{ test.time }}
+            </div>
+          </mat-card>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+EOF
+
+# 6.2. Poprawienie importów w dashboard.component.ts
+cat > ${PROJECT_DIR}/test-manager/src/app/features/dashboard/dashboard.component.ts << 'EOF'
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
+import { StatusChipComponent } from '../../shared/ui/status-chip/status-chip.component';
+import { MetricCardComponent } from '../../shared/ui/metric-card/metric-card.component';
+import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import { TestStatusChartComponent } from './components/test-status-chart/test-status-chart.component';
+
+@Component({
+  selector: 'app-dashboard',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    FormsModule,
+    StatusChipComponent,
+    MetricCardComponent,
+    PageHeaderComponent,
+    TestStatusChartComponent
+  ],
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.scss']
+})
+export class DashboardComponent {
+  timeRangeOptions = ['Ostatnie 7 dni', 'Ostatnie 30 dni', 'Ten kwartał'];
+  selectedTimeRange = 'Ostatnie 7 dni';
+  
+  recentTests = [
+    { 
+      name: 'Logowanie użytkownika', 
+      status: 'success', 
+      project: 'Portal klienta', 
+      time: '2 godz. temu' 
+    },
+    { 
+      name: 'Rejestracja konta', 
+      status: 'error', 
+      project: 'Portal klienta', 
+      time: '3 godz. temu' 
+    },
+    { 
+      name: 'Wyszukiwanie produktów', 
+      status: 'success', 
+      project: 'Aplikacja mobilna', 
+      time: '4 godz. temu' 
+    },
+    { 
+      name: 'Realizacja zamówienia', 
+      status: 'in-progress', 
+      project: 'Portal klienta', 
+      time: '6 godz. temu' 
+    }
+  ];
+}
+EOF
+
+# 7. Poprawienie komponentu AppComponent
+cat > ${PROJECT_DIR}/test-manager/src/app/app.component.ts << 'EOF'
+import { Component, signal, OnInit, PLATFORM_ID, Inject, HostBinding } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { RouterOutlet } from '@angular/router';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { NavigationComponent } from './shared/components/navigation/navigation.component';
+import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
+import { ThemeService } from './core/services/theme.service';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    MatSidenavModule,
+    NavigationComponent,
+    SidebarComponent
+  ],
+  template: `
+    <div class="app-container" [class.dark-theme]="themeService.isDarkMode()" [class.light-theme]="!themeService.isDarkMode()">
+      <app-navigation (sidebarToggled)="toggleSidenav()"></app-navigation>
+
+      <mat-sidenav-container class="sidenav-container">
+        <!-- Prawidłowa implementacja mat-sidenav -->
+        <mat-sidenav [opened]="sidenavOpened()" mode="side" class="app-sidenav">
+          <app-sidebar></app-sidebar>
+        </mat-sidenav>
+
+        <mat-sidenav-content class="sidenav-content-container">
+          <div class="main-content" [class.sidebar-open]="sidenavOpened()" [class.sidebar-closed]="!sidenavOpened()">
+            <router-outlet></router-outlet>
+          </div>
+        </mat-sidenav-content>
+      </mat-sidenav-container>
+    </div>
+  `,
+  styles: [`
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .sidenav-container {
+      flex: 1;
+      margin-top: 64px; // Wysokość paska nawigacyjnego
+    }
+
+    .main-content {
+      padding: 24px;
+      transition: margin-left 0.3s ease;
+    }
+
+    .main-content.sidebar-open {
+      margin-left: 240px; // Szerokość sidebaru
+    }
+
+    .main-content.sidebar-closed {
+      margin-left: 0;
+    }
+
+    .app-sidenav {
+      width: 240px;
+      transition: transform 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      .main-content.sidebar-open {
+        margin-left: 0;
+      }
+
+      .app-sidenav {
+        width: 100%;
+        max-width: 240px;
+      }
+    }
+  `]
+})
+export class AppComponent implements OnInit {
+  sidenavOpened = signal(true);
+
+  constructor(
+    public themeService: ThemeService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
+
+  ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      // Responsywne zachowanie panelu bocznego
+      this.handleResponsiveSidenav();
+    }
+  }
+
+  toggleSidenav() {
+    this.sidenavOpened.update(value => !value);
+  }
+
+  private handleResponsiveSidenav() {
+    // Zamknij panel boczny na małych ekranach domyślnie
+    const checkWidth = () => {
+      if (window.innerWidth < 768 && this.sidenavOpened()) {
+        this.sidenavOpened.set(false);
+      } else if (window.innerWidth >= 1200 && !this.sidenavOpened()) {
+        this.sidenavOpened.set(true);
+      }
+    };
+
+    // Sprawdź przy inicjalizacji
+    checkWidth();
+
+    // Nasłuchuj na zdarzenia zmiany rozmiaru
+    window.addEventListener('resize', checkWidth);
+  }
+}
+EOF
+
+# 8. Zapewnienie spójnego systemu themes
+cat > ${PROJECT_DIR}/test-manager/src/app/core/services/theme.service.ts << 'EOF'
+import { Injectable, signal, PLATFORM_ID, Inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
+import { OverlayContainer } from '@angular/cdk/overlay';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ThemeService {
+  private _darkMode = signal(false);
+  readonly darkMode = this._darkMode.asReadonly();
+
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object,
+    @Inject(DOCUMENT) private document: Document,
+    private overlayContainer: OverlayContainer
+  ) {
+    if (isPlatformBrowser(this.platformId)) {
+      // Sprawdź zapisane preferencje
+      const savedTheme = localStorage.getItem('theme');
+
+      // Sprawdź preferencje systemowe
+      const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initialDarkMode = savedTheme === 'dark' || 
+        (savedTheme === null && prefersDarkMode);
+
+      this._darkMode.set(initialDarkMode);
+      this.applyTheme(initialDarkMode);
+    }
+  }
+
+  toggleDarkMode() {
+    const newValue = !this._darkMode();
+    this._darkMode.set(newValue);
+    this.applyTheme(newValue);
+
+    // Zapisz preferencje w localStorage jeśli w przeglądarce
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('theme', newValue ? 'dark' : 'light');
+    }
+  }
+
+  applyTheme(isDark: boolean) {
+    if (!isPlatformBrowser(this.platformId)) {
+      return; // Pomiń manipulację DOM na serwerze
+    }
+
+    const bodyElement = this.document.body;
+    const htmlElement = this.document.documentElement;
+    const overlayContainerElement = this.overlayContainer.getContainerElement();
+
+    if (isDark) {
+      bodyElement.classList.add('dark-theme');
+      bodyElement.classList.remove('light-theme');
+      htmlElement.classList.add('dark-theme');
+      htmlElement.classList.remove('light-theme');
+      overlayContainerElement.classList.add('dark-theme');
+      overlayContainerElement.classList.remove('light-theme');
+    } else {
+      bodyElement.classList.add('light-theme');
+      bodyElement.classList.remove('dark-theme');
+      htmlElement.classList.add('light-theme');
+      htmlElement.classList.remove('dark-theme');
+      overlayContainerElement.classList.add('light-theme');
+      overlayContainerElement.classList.remove('dark-theme');
+    }
+  }
+
+  // Pomocnicza metoda do sprawdzania aktualnego trybu ciemnego
+  isDarkMode(): boolean {
+    return this._darkMode();
+  }
+}
+EOF
+
+# 9. Naprawienie ProjectService
+cat > ${PROJECT_DIR}/test-manager/src/app/core/services/project.service.ts << 'EOF'
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { ApiService } from './api.service';
+import { tap, catchError } from 'rxjs/operators';
+
+export interface Project {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ProjectService {
+  private projects: Project[] = [];
+  
+  private projectsSubject = new BehaviorSubject<Project[]>([]);
+  private selectedProjectSubject = new BehaviorSubject<Project | null>(null);
+  
+  constructor(private apiService: ApiService) {
+    // Załaduj projekty z API przy inicjalizacji serwisu
+    this.loadProjects();
+  }
+  
+  private loadProjects(): void {
+    this.apiService.getProjects().pipe(
+      catchError(error => {
+        console.error('Błąd podczas ładowania projektów:', error);
+        // Używamy danych przykładowych, jeśli API zwróci błąd
+        this.setupMockProjects();
+        return [];
+      })
+    ).subscribe(
+      (projects) => {
+        if (projects && projects.length > 0) {
+          this.projects = projects;
+          this.projectsSubject.next(this.projects);
+          
+          // Ustaw pierwszy projekt jako wybrany, jeśli jest jeden i żaden nie jest aktualnie wybrany
+          if (this.projects.length > 0 && !this.selectedProjectSubject.value) {
+            this.selectedProjectSubject.next(this.projects[0]);
+          }
+        } else {
+          // Jeśli API zwróciło pustą listę, użyj danych przykładowych
+          this.setupMockProjects();
+        }
+      }
+    );
+  }
+
+  private setupMockProjects(): void {
+    // Użyj przykładowych danych projektów
+    this.projects = [
+      { id: 'proj-1', name: 'Portal klienta', color: 'green', description: 'Aplikacja internetowa dla klientów' },
+      { id: 'proj-2', name: 'Aplikacja mobilna', color: 'purple', description: 'Aplikacja na iOS i Android' },
+      { id: 'proj-3', name: 'Backend API', color: 'blue', description: 'REST API dla wszystkich aplikacji' }
+    ];
+    this.projectsSubject.next(this.projects);
+    
+    // Ustaw pierwszy projekt jako wybrany
+    if (this.projects.length > 0) {
+      this.selectedProjectSubject.next(this.projects[0]);
+    }
+  }
+  
+  get projects$(): Observable<Project[]> {
+    return this.projectsSubject.asObservable();
+  }
+  
+  get selectedProject$(): Observable<Project | null> {
+    return this.selectedProjectSubject.asObservable();
+  }
+  
+  selectProject(projectId: string): void {
+    const project = this.projects.find(p => p.id === projectId) || null;
+    this.selectedProjectSubject.next(project);
+  }
+  
+  addProject(project: Omit<Project, 'id'>): void {
+    this.apiService.createProject(project).subscribe(
+      (newProject) => {
+        this.projects = [...this.projects, newProject];
+        this.projectsSubject.next(this.projects);
+      },
+      (error) => {
+        console.error('Błąd podczas tworzenia projektu:', error);
+        // W przypadku błędu API, dodaj projekt z wygenerowanym ID lokalnie
+        const mockProject = {
+          ...project,
+          id: `proj-${this.projects.length + 1}`
+        };
+        this.projects = [...this.projects, mockProject];
+        this.projectsSubject.next(this.projects);
+      }
+    );
+  }
+  
+  updateProject(id: string, project: Partial<Project>): void {
+    this.apiService.updateProject(id, project).subscribe(
+      (updatedProject) => {
+        this.projects = this.projects.map(p => 
+          p.id === id ? { ...p, ...updatedProject } : p
+        );
+        this.projectsSubject.next(this.projects);
+        
+        // Zaktualizuj wybrany projekt, jeśli to jest ten, który został zaktualizowany
+        const currentSelected = this.selectedProjectSubject.value;
+        if (currentSelected && currentSelected.id === id) {
+          this.selectedProjectSubject.next({ ...currentSelected, ...updatedProject });
+        }
+      },
+      (error) => {
+        console.error('Błąd podczas aktualizacji projektu:', error);
+        // W przypadku błędu API, zaktualizuj projekt lokalnie
+        this.projects = this.projects.map(p => 
+          p.id === id ? { ...p, ...project } : p
+        );
+        this.projectsSubject.next(this.projects);
+        
+        // Zaktualizuj wybrany projekt, jeśli to jest ten, który został zaktualizowany
+        const currentSelected = this.selectedProjectSubject.value;
+        if (currentSelected && currentSelected.id === id) {
+          this.selectedProjectSubject.next({ ...currentSelected, ...project });
+        }
+      }
+    );
+  }
+  
+  deleteProject(id: string): void {
+    this.apiService.deleteProject(id).subscribe(
+      () => {
+        this.projects = this.projects.filter(p => p.id !== id);
+        this.projectsSubject.next(this.projects);
+        
+        // Zresetuj wybór, jeśli usunięty projekt był wybrany
+        const currentSelected = this.selectedProjectSubject.value;
+        if (currentSelected && currentSelected.id === id) {
+          this.selectedProjectSubject.next(this.projects[0] || null);
+        }
+      },
+      (error) => {
+        console.error('Błąd podczas usuwania projektu:', error);
+        // W przypadku błędu API, usuń projekt lokalnie
+        this.projects = this.projects.filter(p => p.id !== id);
+        this.projectsSubject.next(this.projects);
+        
+        // Zresetuj wybór, jeśli usunięty projekt był wybrany
+        const currentSelected = this.selectedProjectSubject.value;
+        if (currentSelected && currentSelected.id === id) {
+          this.selectedProjectSubject.next(this.projects[0] || null);
+        }
+      }
+    );
+  }
+}
+EOF
+
+# 10. Poprawienie routingu w aplikacji
+cat > ${PROJECT_DIR}/test-manager/src/app/app.routes.ts << 'EOF'
+import { Routes } from '@angular/router';
+
+export const routes: Routes = [
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
+  },
+  {
+    path: 'test-cases',
+    loadComponent: () => import('./features/test-cases/test-cases.component').then(m => m.TestCasesComponent)
+  },
+  {
+    path: 'test-cases/create',
+    loadComponent: () => import('./features/test-cases/test-case-form.component').then(m => m.TestCaseFormComponent)
+  },
+  {
+    path: 'test-cases/edit/:id',
+    loadComponent: () => import('./features/test-cases/test-case-form.component').then(m => m.TestCaseFormComponent)
+  },
+  {
+    path: 'test-cases/view/:id',
+    loadComponent: () => import('./features/test-cases/test-case-detail.component').then(m => m.TestCaseDetailComponent)
+  },
+  {
+    path: 'test-runs',
+    loadComponent: () => import('./features/test-runs/test-runs.component').then(m => m.TestRunsComponent)
+  },
+  {
+    path: 'test-runs/create',
+    loadComponent: () => import('./features/test-runs/test-run-create.component').then(m => m.TestRunCreateComponent)
+  },
+  {
+    path: 'test-runs/details/:id',
+    loadComponent: () => import('./features/test-runs/test-run-detail.component').then(m => m.TestRunDetailComponent)
+  },
+  {
+    path: 'test-runs/execute/:id',
+    loadComponent: () => import('./features/test-runs/test-execution.component').then(m => m.TestExecutionComponent)
+  },
+  {
+    path: 'reports',
+    loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent)
+  },
+  {
+    path: 'reports/generate',
+    loadComponent: () => import('./features/reports/report-generator.component').then(m => m.ReportGeneratorComponent)
+  },
+  {
+    path: 'analytics',
+    loadComponent: () => import('./features/analytics/test-analytics.component').then(m => m.TestAnalyticsComponent)
+  },
+  {
+    path: 'profile',
+    loadComponent: () => import('./features/profile/user-profile.component').then(m => m.UserProfileComponent)
+  },
+  {
+    path: 'settings/project',
+    loadComponent: () => import('./features/settings/project-settings.component').then(m => m.ProjectSettingsComponent)
+  },
+  // Trasa fallback dla niedopasowanych ścieżek
+  { path: '**', redirectTo: '/dashboard' }
+];
+EOF
+
+echo "Naprawiono plik app.routes.ts"
+
+# 11. Upewnij się, że strona nadal działa w trybie SSR
+cat > ${PROJECT_DIR}/test-manager/src/app/app.routes.server.ts << 'EOF'
+import { RenderMode, ServerRoute } from '@angular/ssr';
+import { routes } from './app.routes';
+
+// Zdefiniuj dokładnie takie same ścieżki jak w app.routes.ts, ale z odpowiednim RenderMode
+export const serverRoutes: ServerRoute[] = [
+  // Dynamiczne trasy z parametrami - renderowane po stronie klienta
+  {
+    path: 'test-cases/edit/:id',
+    renderMode: RenderMode.Client
+  },
+  {
+    path: 'test-cases/view/:id',
+    renderMode: RenderMode.Client
+  },
+  {
+    path: 'test-runs/details/:id',
+    renderMode: RenderMode.Client
+  },
+  {
+    path: 'test-runs/execute/:id',
+    renderMode: RenderMode.Client
+  },
+  {
+    path: 'reports/generate',
+    renderMode: RenderMode.Client
+  },
+  
+  // Dla wszystkich innych tras używamy Prerender
+  {
+    path: '**',
+    renderMode: RenderMode.Prerender
+  }
+];
+EOF
+
+echo "Naprawiono plik app.routes.server.ts"
+
+# 12. Dodanie brakującego komponentu TestStatusChart
+cat > ${PROJECT_DIR}/test-manager/src/app/features/dashboard/components/test-status-chart/test-status-chart.component.ts << 'EOF'
+import { Component, Input, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { FormsModule } from '@angular/forms';
+import { ProjectService, Project } from '../../../../core/services/project.service';
+
+interface ChartData {
+  label: string;
+  passed: number;
+  failed: number;
+  blocked: number;
+  notExecuted: number;
+}
+
+@Component({
+  selector: 'app-test-status-chart',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatIconModule
+  ],
+  template: `
+    <div class="chart-header">
+      <h2 class="chart-title">Status wykonania testów</h2>
+
+      <div class="chart-controls">
+        <mat-form-field appearance="outline" class="time-range-selector">
+          <mat-select [(value)]="selectedTimeRange" (selectionChange)="updateChart()">
+            <mat-option *ngFor="let option of timeRangeOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="project-selector">
+          <mat-select [(value)]="selectedProject" (selectionChange)="updateChart()">
+            <mat-option value="all">Wszystkie projekty</mat-option>
+            <mat-option *ngFor="let project of projects" [value]="project.id">
+              <div class="project-option">
+                <div class="color-dot" [ngClass]="project.color"></div>
+                <span>{{ project.name }}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-legend">
+        <div class="legend-item">
+          <div class="legend-color passed"></div>
+          <div class="legend-label">Zaliczone</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color failed"></div>
+          <div class="legend-label">Niezaliczone</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color blocked"></div>
+          <div class="legend-label">Zablokowane</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color not-executed"></div>
+          <div class="legend-label">Niewykonane</div>
+        </div>
+      </div>
+
+      <div class="test-status-chart">
+        <div class="chart-axis y-axis">
+          <div class="axis-label">100%</div>
+          <div class="axis-label">80%</div>
+          <div class="axis-label">60%</div>
+          <div class="axis-label">40%</div>
+          <div class="axis-label">20%</div>
+          <div class="axis-label">0%</div>
+        </div>
+        <div class="chart-body">
+          <div class="chart-columns">
+            <div class="chart-column" *ngFor="let item of chartData">
+              <div class="column-segments">
+                <div class="segment passed" [style.height.%]="getSegmentHeight(item.passed)"></div>
+                <div class="segment failed" [style.height.%]="getSegmentHeight(item.failed)"></div>
+                <div class="segment blocked" [style.height.%]="getSegmentHeight(item.blocked)"></div>
+                <div class="segment not-executed" [style.height.%]="getSegmentHeight(item.notExecuted)"></div>
+              </div>
+              <div class="column-label">{{ item.label }}</div>
+            </div>
+          </div>
+          <div class="chart-gridlines">
+            <div class="gridline"></div>
+            <div class="gridline"></div>
+            <div class="gridline"></div>
+            <div class="gridline"></div>
+            <div class="gridline"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-summary">
+        <div class="summary-metric passed">
+          <div class="metric-value">{{ getTotalPassed() }}</div>
+          <div class="metric-label">Zaliczone</div>
+        </div>
+        <div class="summary-metric failed">
+          <div class="metric-value">{{ getTotalFailed() }}</div>
+          <div class="metric-label">Niezaliczone</div>
+        </div>
+        <div class="summary-metric blocked">
+          <div class="metric-value">{{ getTotalBlocked() }}</div>
+          <div class="metric-label">Zablokowane</div>
+        </div>
+        <div class="summary-metric not-executed">
+          <div class="metric-value">{{ getTotalNotExecuted() }}</div>
+          <div class="metric-label">Niewykonane</div>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+
+      @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .chart-title {
+        font-size: 16px;
+        font-weight: 500;
+        margin: 0;
+      }
+
+      .chart-controls {
+        display: flex;
+        gap: 16px;
+
+        .time-range-selector, .project-selector {
+          width: 180px;
+
+          ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+            display: none;
+          }
+        }
+
+        .project-option {
+          display: flex;
+          align-items: center;
+
+          .color-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+
+            &.green {
+              background-color: #4caf50;
+            }
+
+            &.purple {
+              background-color: #9c27b0;
+            }
+
+            &.blue {
+              background-color: #2196f3;
+            }
+          }
+        }
+      }
+    }
+
+    .chart-container {
+      .chart-legend {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+
+        .legend-item {
+          display: flex;
+          align-items: center;
+
+          .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            margin-right: 8px;
+
+            &.passed {
+              background-color: #4caf50;
+            }
+
+            &.failed {
+              background-color: #f44336;
+            }
+
+            &.blocked {
+              background-color: #ff9800;
+            }
+
+            &.not-executed {
+              background-color: #9e9e9e;
+            }
+          }
+
+          .legend-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+          }
+        }
+      }
+
+      .test-status-chart {
+        display: flex;
+        height: 300px;
+        margin-bottom: 24px;
+
+        .y-axis {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding-right: 8px;
+          width: 50px;
+
+          .axis-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            height: 20px;
+            display: flex;
+            align-items: center;
+          }
+        }
+
+        .chart-body {
+          flex: 1;
+          position: relative;
+
+          .chart-gridlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            pointer-events: none;
+
+            .gridline {
+              height: 1px;
+              background-color: rgba(0, 0, 0, 0.1);
+
+              .dark-theme & {
+                background-color: rgba(255, 255, 255, 0.1);
+              }
+            }
+          }
+
+          .chart-columns {
+            display: flex;
+            justify-content: space-around;
+            height: 100%;
+            position: relative;
+            z-index: 1;
+
+            .chart-column {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              padding: 0 8px;
+
+              .column-segments {
+                flex: 1;
+                display: flex;
+                flex-direction: column-reverse;
+                justify-content: flex-start;
+
+                .segment {
+                  width: 100%;
+
+                  &.passed {
+                    background-color: #4caf50;
+                  }
+
+                  &.failed {
+                    background-color: #f44336;
+                  }
+
+                  &.blocked {
+                    background-color: #ff9800;
+                  }
+
+                  &.not-executed {
+                    background-color: #9e9e9e;
+                  }
+                }
+              }
+
+              .column-label {
+                text-align: center;
+                font-size: 12px;
+                color: var(--text-secondary);
+                padding-top: 4px;
+                height: 20px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
+            }
+          }
+        }
+      }
+
+      .chart-summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+
+        .summary-metric {
+          text-align: center;
+
+          .metric-value {
+            font-size: 24px;
+            font-weight: 500;
+
+            &.passed, .passed & {
+              color: #4caf50;
+            }
+
+            &.failed, .failed & {
+              color: #f44336;
+            }
+
+            &.blocked, .blocked & {
+              color: #ff9800;
+            }
+
+            &.not-executed, .not-executed & {
+              color: #9e9e9e;
+            }
+          }
+
+          .metric-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+          }
+        }
+      }
+    }
+  `]
+})
+export class TestStatusChartComponent implements OnInit {
+  @Input() height: string = '400px';
+
+  timeRangeOptions = [
+    { value: '7', label: 'Ostatnie 7 dni' },
+    { value: '30', label: 'Ostatnie 30 dni' },
+    { value: '90', label: 'Ostatnie 90 dni' }
+  ];
+
+  selectedTimeRange = '30';
+  selectedProject = 'all';
+
+  projects: Project[] = [];
+  chartData: ChartData[] = [];
+
+  constructor(private projectService: ProjectService) {}
+
+  ngOnInit() {
+    this.projectService.projects$.subscribe(projects => {
+      this.projects = projects;
+    });
+
+    this.loadChartData();
+  }
+
+  loadChartData() {
+    // Dane przykładowe - w rzeczywistej aplikacji dane byłyby pobierane z API
+    if (this.selectedTimeRange === '7') {
+      this.chartData = [
+        { label: '6 mar', passed: 60, failed: 10, blocked: 5, notExecuted: 25 },
+        { label: '7 mar', passed: 65, failed: 8, blocked: 7, notExecuted: 20 },
+        { label: '8 mar', passed: 70, failed: 12, blocked: 3, notExecuted: 15 },
+        { label: '9 mar', passed: 68, failed: 15, blocked: 7, notExecuted: 10 },
+        { label: '10 mar', passed: 72, failed: 13, blocked: 5, notExecuted: 10 },
+        { label: '11 mar', passed: 75, failed: 10, blocked: 5, notExecuted: 10 },
+        { label: '12 mar', passed: 80, failed: 8, blocked: 7, notExecuted: 5 }
+      ];
+    } else if (this.selectedTimeRange === '30') {
+      this.chartData = [
+        { label: 'Tydzień 1', passed: 55, failed: 15, blocked: 10, notExecuted: 20 },
+        { label: 'Tydzień 2', passed: 60, failed: 15, blocked: 5, notExecuted: 20 },
+        { label: 'Tydzień 3', passed: 70, failed: 10, blocked: 5, notExecuted: 15 },
+        { label: 'Tydzień 4', passed: 80, failed: 8, blocked: 7, notExecuted: 5 }
+      ];
+    } else {
+      this.chartData = [
+        { label: 'Styczeń', passed: 50, failed: 20, blocked: 10, notExecuted: 20 },
+        { label: 'Luty', passed: 60, failed: 15, blocked: 5, notExecuted: 20 },
+        { label: 'Marzec', passed: 75, failed: 10, blocked: 5, notExecuted: 10 }
+      ];
+    }
+
+    // Filtruj według projektu, jeśli potrzeba
+    if (this.selectedProject !== 'all') {
+      // W rzeczywistej aplikacji, filtrowanie danych według projektu
+      // Tutaj upraszczamy przykład
+      const projectIndex = this.projects.findIndex(p => p.id === this.selectedProject);
+      const adjustmentFactor = (projectIndex + 1) * 0.1;
+
+      this.chartData = this.chartData.map(item => ({
+        ...item,
+        passed: Math.min(Math.floor(item.passed * (1 + adjustmentFactor)), 100),
+        failed: Math.max(Math.floor(item.failed * (1 - adjustmentFactor)), 0),
+        blocked: Math.max(Math.floor(item.blocked * (1 - adjustmentFactor)), 0),
+        notExecuted: Math.max(Math.floor(item.notExecuted * (1 - adjustmentFactor)), 0)
+      }));
+    }
+  }
+
+  updateChart() {
+    this.loadChartData();
+  }
+
+  getSegmentHeight(value: number): number {
+    return value;
+  }
+
+  getTotalPassed(): number {
+    return this.getLastItem().passed;
+  }
+
+  getTotalFailed(): number {
+    return this.getLastItem().failed;
+  }
+
+  getTotalBlocked(): number {
+    return this.getLastItem().blocked;
+  }
+
+  getTotalNotExecuted(): number {
+    return this.getLastItem().notExecuted;
+  }
+
+  private getLastItem(): ChartData {
+    return this.chartData[this.chartData.length - 1];
+  }
+}
+EOF
+
+echo "Dodano brakujący komponent TestStatusChart"
+
+# 13. Naprawienie routingu dla TestCasesComponent
+cat > ${PROJECT_DIR}/test-manager/src/app/features/test-cases/test-cases.component.ts << 'EOF'
+import { Component, ViewChild, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { StatusChipComponent } from '../../shared/ui/status-chip/status-chip.component';
+import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import { TestCase } from '../../core/models/test-case.model';
+import { ApiService } from '../../core/services/api.service';
+
+@Component({
+  selector: 'app-test-cases',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatCardModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatIconModule,
+    MatSnackBarModule,
+    StatusChipComponent,
+    PageHeaderComponent
+  ],
+  templateUrl: './test-cases.component.html',
+  styleUrls: ['./test-cases.component.scss']
+})
+export class TestCasesComponent implements OnInit {
+  displayedColumns: string[] = ['id', 'name', 'project', 'priority', 'author', 'creationDate', 'status', 'actions'];
+  dataSource = new MatTableDataSource<TestCase>([]);
+  isLoading = true;
+  
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  
+  projects = ['Wszystkie projekty', 'Portal klienta', 'Aplikacja mobilna', 'Backend API'];
+  selectedProject = 'Wszystkie projekty';
+  
+  constructor(
+    private apiService: ApiService,
+    private router: Router,
+    private snackBar: MatSnackBar
+  ) {}
+  
+  ngOnInit() {
+    this.loadTestCases();
+  }
+  
+  loadTestCases() {
+    this.isLoading = true;
+    this.apiService.getTestCases().subscribe(
+      testCases => {
+        this.dataSource.data = testCases;
+        this.isLoading = false;
+      },
+      error => {
+        console.error('Błąd podczas pobierania przypadków testowych:', error);
+        this.snackBar.open('Błąd podczas pobierania danych', 'OK', { duration: 3000 });
+        this.isLoading = false;
+      }
+    );
+  }
+  
+  ngAfterViewInit() {
+    if (this.paginator) {
+      this.dataSource.paginator = this.paginator;
+    }
+  }
+  
+  applyFilter(event: Event) {
+    const filterValue = (event.target as HTMLInputElement).value;
+    this.dataSource.filter = filterValue.trim().toLowerCase();
+    
+    if (this.dataSource.paginator) {
+      this.dataSource.paginator.firstPage();
+    }
+  }
+  
+  filterByProject() {
+    if (this.selectedProject === 'Wszystkie projekty') {
+      this.dataSource.filter = '';
+    } else {
+      this.dataSource.filterPredicate = (data: TestCase, filter: string) => {
+        return data.project.name === filter;
+      };
+      this.dataSource.filter = this.selectedProject;
+    }
+    
+    if (this.dataSource.paginator) {
+      this.dataSource.paginator.firstPage();
+    }
+  }
+  
+  viewTestCase(id: string) {
+    this.router.navigate(['/test-cases/view', id]);
+  }
+  
+  editTestCase(id: string) {
+    this.router.navigate(['/test-cases/edit', id]);
+  }
+  
+  createTestCase() {
+    this.router.navigate(['/test-cases/create']);
+  }
+  
+  deleteTestCase(id: string) {
+    if (confirm('Czy na pewno chcesz usunąć ten przypadek testowy?')) {
+      this.apiService.deleteTestCase(id).subscribe(
+        () => {
+          this.snackBar.open('Przypadek testowy został usunięty', 'OK', { duration: 3000 });
+          this.loadTestCases();
+        },
+        error => {
+          console.error('Błąd podczas usuwania przypadku testowego:', error);
+          this.snackBar.open('Błąd podczas usuwania przypadku testowego', 'OK', { duration: 3000 });
+        }
+      );
+    }
+  }
+}
+EOF
+
+# 14. Aktualizacja szablonu HTML dla TestCasesComponent
+cat > ${PROJECT_DIR}/test-manager/src/app/features/test-cases/test-cases.component.html << 'EOF'
+<div class="test-cases-container">
+  <app-page-header title="Przypadki testowe">
+    <button mat-flat-button color="primary" (click)="createTestCase()">
+      <mat-icon>add</mat-icon>
+      <span>Dodaj przypadek</span>
+    </button>
+  </app-page-header>
+  
+  <mat-card class="table-container">
+    <div class="table-header">
+      <div class="table-filters">
+        <button mat-stroked-button class="filter-button">
+          <mat-icon>filter_list</mat-icon>
+          <span>Filtry</span>
+        </button>
+        
+        <mat-form-field appearance="outline" class="project-selector">
+          <mat-select [(value)]="selectedProject" (selectionChange)="filterByProject()">
+            <mat-option *ngFor="let project of projects" [value]="project">
+              {{ project }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Szukaj przypadków testowych..." (keyup)="applyFilter($event)">
+      </mat-form-field>
+    </div>
+    
+    <div class="table-content">
+      <div class="loading-indicator" *ngIf="isLoading">
+        <mat-icon>hourglass_empty</mat-icon>
+        <p>Ładowanie przypadków testowych...</p>
+      </div>
+      
+      <div class="mat-elevation-z0" *ngIf="!isLoading">
+        <table mat-table [dataSource]="dataSource" class="full-width-table">
+          <!-- ID Column -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef>ID</th>
+            <td mat-cell *matCellDef="let row">{{ row.id }}</td>
+          </ng-container>
+          
+          <!-- Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Nazwa</th>
+            <td mat-cell *matCellDef="let row" class="name-cell">{{ row.name }}</td>
+          </ng-container>
+          
+          <!-- Project Column -->
+          <ng-container matColumnDef="project">
+            <th mat-header-cell *matHeaderCellDef>Projekt</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="project-indicator">
+                <div class="color-dot" [ngClass]="row.project.color"></div>
+                <span>{{ row.project.name }}</span>
+              </div>
+            </td>
+          </ng-container>
+          
+          <!-- Priority Column -->
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef>Priorytet</th>
+            <td mat-cell *matCellDef="let row">
+              <app-status-chip [text]="row.priority.level" [color]="row.priority.color"></app-status-chip>
+            </td>
+          </ng-container>
+          
+          <!-- Author Column -->
+          <ng-container matColumnDef="author">
+            <th mat-header-cell *matHeaderCellDef>Autor</th>
+            <td mat-cell *matCellDef="let row">{{ row.author }}</td>
+          </ng-container>
+          
+          <!-- Creation Date Column -->
+          <ng-container matColumnDef="creationDate">
+            <th mat-header-cell *matHeaderCellDef>Data utworzenia</th>
+            <td mat-cell *matCellDef="let row">{{ row.creationDate }}</td>
+          </ng-container>
+          
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <app-status-chip [text]="row.status.name" [color]="row.status.color"></app-status-chip>
+            </td>
+          </ng-container>
+          
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Akcje</th>
+            <td mat-cell *matCellDef="let row" class="actions-cell">
+              <button mat-icon-button color="primary" (click)="viewTestCase(row.id)" matTooltip="Zobacz szczegóły">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button color="accent" (click)="editTestCase(row.id)" matTooltip="Edytuj">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteTestCase(row.id)" matTooltip="Usuń">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+          
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row" (click)="viewTestCase(row.id)"></tr>
+        </table>
+        
+        <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+      </div>
+    </div>
+  </mat-card>
+</div>
+EOF
+
+# 15. Dodanie stylów SCSS dla tabeli TestCasesComponent
+cat > ${PROJECT_DIR}/test-manager/src/app/features/test-cases/test-cases.component.scss << 'EOF'
+.test-cases-container {
+  .table-container {
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+      
+      .dark-theme & {
+        border-bottom-color: rgba(255, 255, 255, 0.12);
+      }
+      
+      .table-filters {
+        display: flex;
+        align-items: center;
+        
+        .filter-button {
+          margin-right: 12px;
+        }
+        
+        .project-selector {
+          width: 180px;
+          
+          ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+            display: none;
+          }
+        }
+      }
+      
+      .search-field {
+        width: 300px;
+        
+        ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+          display: none;
+        }
+      }
+    }
+    
+    .table-content {
+      .loading-indicator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 0;
+        color: var(--text-secondary);
+        
+        mat-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          margin-bottom: 16px;
+          opacity: 0.5;
+        }
+        
+        p {
+          font-size: 16px;
+          margin: 0;
+        }
+      }
+    }
+    
+    .full-width-table {
+      width: 100%;
+      
+      .mat-mdc-header-cell {
+        font-weight: 500;
+      }
+      
+      .mat-column-id {
+        width: 80px;
+      }
+      
+      .mat-column-name {
+        min-width: 280px;
+      }
+      
+      .mat-column-project {
+        width: 160px;
+      }
+      
+      .mat-column-priority {
+        width: 120px;
+      }
+      
+      .mat-column-author {
+        width: 140px;
+      }
+      
+      .mat-column-creationDate {
+        width: 140px;
+      }
+      
+      .mat-column-status {
+        width: 120px;
+      }
+      
+      .mat-column-actions {
+        width: 120px;
+        text-align: right;
+      }
+      
+      .name-cell {
+        font-weight: 500;
+      }
+      
+      .project-indicator {
+        display: flex;
+        align-items: center;
+        
+        .color-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          margin-right: 8px;
+          
+          &.green {
+            background-color: #4caf50;
+          }
+          
+          &.purple {
+            background-color: #9c27b0;
+          }
+          
+          &.blue {
+            background-color: #2196f3;
+          }
+        }
+      }
+      
+      .table-row {
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.04);
+          cursor: pointer;
+          
+          .dark-theme & {
+            background-color: rgba(255, 255, 255, 0.08);
+          }
+        }
+        
+        .actions-cell button {
+          opacity: 0.6;
+          transition: opacity 0.2s;
+          
+          &:hover {
+            opacity: 1;
+          }
+        }
+      }
+    }
+  }
+}
+EOF
+
+echo "Aktualizowano komponenty zarządzania przypadkami testowymi"
+
+# 16. Aktualizacja komponentów Test Runs
+cat > ${PROJECT_DIR}/test-manager/src/app/features/test-runs/test-runs.component.html << 'EOF'
+<div class="test-runs-container">
+  <app-page-header title="Wykonania testów">
+    <button mat-flat-button color="primary" (click)="createTestRun()">
+      <mat-icon>add</mat-icon>
+      <span>Nowe wykonanie</span>
+    </button>
+  </app-page-header>
+  
+  <div class="test-runs-grid">
+    <mat-card class="test-runs-card">
+      <mat-card-header>
+        <mat-card-title>Testy w toku</mat-card-title>
+        <div class="header-badge accent">{{ activeRuns.length }} aktywne</div>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let run of activeRuns" [expanded]="run.id === 'TR-007'">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{ run.id }}: {{ run.name }}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            
+            <div class="test-run-details">
+              <div class="project-name">{{ run.project }}</div>
+              
+              <div class="progress-container">
+                <div class="progress-label">Postęp:</div>
+                <mat-progress-bar mode="determinate" [value]="run.progress?.percentage"></mat-progress-bar>
+                <div class="progress-stats">{{ run.progress?.current }}/{{ run.progress?.total }}</div>
+              </div>
+              
+              <div class="actions">
+                <button mat-stroked-button color="primary" (click)="continueTestRun(run)">Kontynuuj</button>
+                <button mat-button (click)="viewTestRunDetails(run)">Szczegóły</button>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </mat-card-content>
+    </mat-card>
+    
+    <mat-card class="test-runs-card">
+      <mat-card-header>
+        <mat-card-title>Ukończone testy</mat-card-title>
+        <div class="header-badge success">{{ completedRuns.length }} ukończone</div>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let run of completedRuns">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{ run.id }}: {{ run.name }}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            
+            <div class="test-run-details">
+              <div class="project-name">{{ run.project }}</div>
+              
+              <div class="results-container">
+                <app-status-chip 
+                  [text]="run.results?.success + ' sukcesów'" 
+                  color="success">
+                </app-status-chip>
+                
+                <app-status-chip 
+                  [text]="run.results?.errors + ' błędów'" 
+                  color="warn">
+                </app-status-chip>
+              </div>
+              
+              <div class="actions">
+                <button mat-stroked-button color="primary" (click)="generateReport(run)">Raport</button>
+                <button mat-button (click)="viewTestRunDetails(run)">Szczegóły</button>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </mat-card-content>
+    </mat-card>
+    
+    <mat-card class="test-runs-card">
+      <mat-card-header>
+        <mat-card-title>Zaplanowane testy</mat-card-title>
+        <div class="header-badge primary">{{ scheduledRuns.length }} zaplanowane</div>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let run of scheduledRuns">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{ run.id }}: {{ run.name }}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            
+            <div class="test-run-details">
+              <div class="project-name">{{ run.project }}</div>
+              
+              <div class="schedule-container">
+                <div class="schedule-label">Start:</div>
+                <div>{{ run.date }}</div>
+              </div>
+              
+              <div class="actions">
+                <button mat-stroked-button color="primary" (click)="editTestRun(run)">Edytuj</button>
+                <button mat-button (click)="viewTestRunDetails(run)">Szczegóły</button>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+EOF
+
+cat > ${PROJECT_DIR}/test-manager/src/app/features/test-runs/test-runs.component.ts << 'EOF'
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { StatusChipComponent } from '../../shared/ui/status-chip/status-chip.component';
+import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import { TestRun } from '../../core/models/test-run.model';
+import { ApiService } from '../../core/services/api.service';
+
+@Component({
+  selector: 'app-test-runs',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatCardModule,
+    MatExpansionModule,
+    MatProgressBarModule,
+    MatButtonModule,
+    MatIconModule,
+    MatSnackBarModule,
+    StatusChipComponent,
+    PageHeaderComponent
+  ],
+  templateUrl: './test-runs.component.html',
+  styleUrls: ['./test-runs.component.scss']
+})
+export class TestRunsComponent implements OnInit {
+  activeRuns: TestRun[] = [];
+  completedRuns: TestRun[] = [];
+  scheduledRuns: TestRun[] = [];
+  isLoading = true;
+
+  constructor(
+    private apiService: ApiService,
+    private router: Router,
+    private snackBar: MatSnackBar
+  ) {}
+
+  ngOnInit() {
+    this.loadTestRuns();
+  }
+
+  loadTestRuns() {
+    this.isLoading = true;
+    this.apiService.getTestRuns().subscribe(
+      testRuns => {
+        // Resetuj tablice
+        this.activeRuns = [];
+        this.completedRuns = [];
+        this.scheduledRuns = [];
+
+        // Segreguj dane według statusu
+        testRuns.forEach(run => {
+          if (run.progress && run.progress.percentage < 100) {
+            this.activeRuns.push(run);
+          } else if (run.results) {
+            this.completedRuns.push(run);
+          } else {
+            this.scheduledRuns.push(run);
+          }
+        });
+
+        this.isLoading = false;
+      },
+      error => {
+        console.error('Błąd podczas pobierania wykonań testów:', error);
+        this.snackBar.open('Błąd podczas pobierania danych', 'OK', { duration: 3000 });
+        
+        // Przykładowe dane w przypadku błędu API
+        this.setupMockData();
+        this.isLoading = false;
+      }
+    );
+  }
+
+  setupMockData() {
+    this.activeRuns = [
+      {
+        id: 'TR-007',
+        name: 'Testy modułu płatności',
+        project: 'Portal klienta',
+        progress: { current: 15, total: 20, percentage: 75 }
+      },
+      {
+        id: 'TR-008',
+        name: 'Testy wydajnościowe API',
+        project: 'Backend API',
+        progress: { current: 6, total: 20, percentage: 30 }
+      }
+    ];
+    
+    this.completedRuns = [
+      {
+        id: 'TR-006',
+        name: 'Testy interfejsu użytkownika',
+        project: 'Portal klienta',
+        results: { success: 18, errors: 2 }
+      },
+      {
+        id: 'TR-005',
+        name: 'Testy funkcjonalności wyszukiwania',
+        project: 'Aplikacja mobilna',
+        results: { success: 15, errors: 0 }
+      },
+      {
+        id: 'TR-004',
+        name: 'Testy bezpieczeństwa',
+        project: 'Backend API',
+        results: { success: 12, errors: 3 }
+      }
+    ];
+    
+    this.scheduledRuns = [
+      {
+        id: 'TR-009',
+        name: 'Testy integracji z API płatności',
+        project: 'Portal klienta',
+        date: '15 mar 2025'
+      },
+      {
+        id: 'TR-010',
+        name: 'Testy kompatybilności mobilnej',
+        project: 'Aplikacja mobilna',
+        date: '18 mar 2025'
+      }
+    ];
+  }
+
+  createTestRun() {
+    this.router.navigate(['/test-runs/create']);
+  }
+
+  continueTestRun(run: TestRun) {
+    this.router.navigate(['/test-runs/execute', run.id]);
+  }
+
+  viewTestRunDetails(run: TestRun) {
+    this.router.navigate(['/test-runs/details', run.id]);
+  }
+
+  editTestRun(run: TestRun) {
+    this.router.navigate(['/test-runs/create'], { queryParams: { testRunId: run.id } });
+  }
+
+  generateReport(run: TestRun) {
+    this.router.navigate(['/reports/generate'], { queryParams: { testRunId: run.id } });
+  }
+}
+EOF
+
+echo "Zaktualizowano komponenty zarządzania wykonaniami testów"
+
+# 17. Uzupełnienie konfiguracji SCSS dla MetricCardComponent
+cat > ${PROJECT_DIR}/test-manager/src/app/shared/ui/metric-card/metric-card.component.scss << 'EOF'
+.metric-card {
+  .metric-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    
+    .metric-info {
+      .metric-label {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+      }
+      
+      .metric-value {
+        font-size: 28px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      
+      .metric-change {
+        font-size: 14px;
+        color: var(--text-secondary);
+        
+        span {
+          font-weight: 500;
+        }
+        
+        &.positive span {
+          color: var(--success-color);
+        }
+        
+        &.negative span {
+          color: var(--warn-color);
+        }
+      }
+    }
+    
+    .metric-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      &.blue {
+        background-color: rgba(33, 150, 243, 0.1);
+        color: #2196f3;
+      }
+      
+      &.red {
+        background-color: rgba(244, 67, 54, 0.1);
+        color: #f44336;
+      }
+      
+      &.purple {
+        background-color: rgba(156, 39, 176, 0.1);
+        color: #9c27b0;
+      }
+      
+      &.green {
+        background-color: rgba(76, 175, 80, 0.1);
+        color: #4caf50;
+      }
+    }
+  }
+}
+EOF
+
+# 18. Aktualizacja komponentu MetricCardComponent aby korzystał z pliku SCSS
+cat > ${PROJECT_DIR}/test-manager/src/app/shared/ui/metric-card/metric-card.component.ts << 'EOF'
+import { Component, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+
+@Component({
+  selector: 'app-metric-card',
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatIconModule
+  ],
+  templateUrl: './metric-card.component.html',
+  styleUrls: ['./metric-card.component.scss']
+})
+export class MetricCardComponent {
+  @Input() label = '';
+  @Input() value = '';
+  @Input() change = '';
+  @Input() changeLabel = '';
+  @Input() changeType: 'positive' | 'negative' | 'neutral' = 'neutral';
+  @Input() icon = 'insights';
+  @Input() color: 'blue' | 'red' | 'purple' | 'green' = 'blue';
+}
+EOF
+
+# 19. Utworzenie szablonu HTML dla komponentu MetricCardComponent
+cat > ${PROJECT_DIR}/test-manager/src/app/shared/ui/metric-card/metric-card.component.html << 'EOF'
+<mat-card class="metric-card">
+  <mat-card-content>
+    <div class="metric-content">
+      <div class="metric-info">
+        <div class="metric-label">{{ label }}</div>
+        <div class="metric-value">{{ value }}</div>
+        <div class="metric-change" [ngClass]="changeType">
+          <span>{{ change }}</span> {{ changeLabel }}
+        </div>
+      </div>
+      <div class="metric-icon" [ngClass]="color">
+        <mat-icon>{{ icon }}</mat-icon>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+EOF
+
+# 20. Implementacja brakującego komponentu TestStatusChart
+cat > ${PROJECT_DIR}/test-manager/src/app/features/dashboard/components/test-status-chart/test-status-chart.component.html << 'EOF'
+<div class="chart-header">
+  <h2 class="chart-title">Status wykonania testów</h2>
+
+  <div class="chart-controls">
+    <mat-form-field appearance="outline" class="time-range-selector">
+      <mat-select [(value)]="selectedTimeRange" (selectionChange)="updateChart()">
+        <mat-option *ngFor="let option of timeRangeOptions" [value]="option.value">
+          {{ option.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="project-selector">
+      <mat-select [(value)]="selectedProject" (selectionChange)="updateChart()">
+        <mat-option value="all">Wszystkie projekty</mat-option>
+        <mat-option *ngFor="let project of projects" [value]="project.id">
+          <div class="project-option">
+            <div class="color-dot" [ngClass]="project.color"></div>
+            <span>{{ project.name }}</span>
+          </div>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+</div>
+
+<div class="chart-container">
+  <div class="chart-legend">
+    <div class="legend-item">
+      <div class="legend-color passed"></div>
+      <div class="legend-label">Zaliczone</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color failed"></div>
+      <div class="legend-label">Niezaliczone</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color blocked"></div>
+      <div class="legend-label">Zablokowane</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color not-executed"></div>
+      <div class="legend-label">Niewykonane</div>
+    </div>
+  </div>
+
+  <div class="test-status-chart">
+    <div class="chart-axis y-axis">
+      <div class="axis-label">100%</div>
+      <div class="axis-label">80%</div>
+      <div class="axis-label">60%</div>
+      <div class="axis-label">40%</div>
+      <div class="axis-label">20%</div>
+      <div class="axis-label">0%</div>
+    </div>
+    <div class="chart-body">
+      <div class="chart-columns">
+        <div class="chart-column" *ngFor="let item of chartData">
+          <div class="column-segments">
+            <div class="segment passed" [style.height.%]="getSegmentHeight(item.passed)"></div>
+            <div class="segment failed" [style.height.%]="getSegmentHeight(item.failed)"></div>
+            <div class="segment blocked" [style.height.%]="getSegmentHeight(item.blocked)"></div>
+            <div class="segment not-executed" [style.height.%]="getSegmentHeight(item.notExecuted)"></div>
+          </div>
+          <div class="column-label">{{ item.label }}</div>
+        </div>
+      </div>
+      <div class="chart-gridlines">
+        <div class="gridline"></div>
+        <div class="gridline"></div>
+        <div class="gridline"></div>
+        <div class="gridline"></div>
+        <div class="gridline"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-summary">
+    <div class="summary-metric passed">
+      <div class="metric-value">{{ getTotalPassed() }}</div>
+      <div class="metric-label">Zaliczone</div>
+    </div>
+    <div class="summary-metric failed">
+      <div class="metric-value">{{ getTotalFailed() }}</div>
+      <div class="metric-label">Niezaliczone</div>
+    </div>
+    <div class="summary-metric blocked">
+      <div class="metric-value">{{ getTotalBlocked() }}</div>
+      <div class="metric-label">Zablokowane</div>
+    </div>
+    <div class="summary-metric not-executed">
+      <div class="metric-value">{{ getTotalNotExecuted() }}</div>
+      <div class="metric-label">Niewykonane</div>
+    </div>
+  </div>
+</div>
+EOF
+
+cat > ${PROJECT_DIR}/test-manager/src/app/features/dashboard/components/test-status-chart/test-status-chart.component.scss << 'EOF'
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .chart-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  .chart-controls {
+    display: flex;
+    gap: 16px;
+
+    .time-range-selector, .project-selector {
+      width: 180px;
+
+      ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+      }
+    }
+
+    .project-option {
+      display: flex;
+      align-items: center;
+
+      .color-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 8px;
+
+        &.green {
+          background-color: #4caf50;
+        }
+
+        &.purple {
+          background-color: #9c27b0;
+        }
+
+        &.blue {
+          background-color: #2196f3;
+        }
+      }
+    }
+  }
+}
+
+.chart-container {
+  .chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+
+      .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 2px;
+        margin-right: 8px;
+
+        &.passed {
+          background-color: #4caf50;
+        }
+
+        &.failed {
+          background-color: #f44336;
+        }
+
+        &.blocked {
+          background-color: #ff9800;
+        }
+
+        &.not-executed {
+          background-color: #9e9e9e;
+        }
+      }
+
+      .legend-label {
+        font-size: 14px;
+        color: var(--text-secondary);
+      }
+    }
+  }
+
+  .test-status-chart {
+    display: flex;
+    height: 300px;
+    margin-bottom: 24px;
+
+    .y-axis {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding-right: 8px;
+      width: 50px;
+
+      .axis-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        height: 20px;
+        display: flex;
+        align-items: center;
+      }
+    }
+
+    .chart-body {
+      flex: 1;
+      position: relative;
+
+      .chart-gridlines {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        pointer-events: none;
+
+        .gridline {
+          height: 1px;
+          background-color: rgba(0, 0, 0, 0.1);
+
+          .dark-theme & {
+            background-color: rgba(255, 255, 255, 0.1);
+          }
+        }
+      }
+
+      .chart-columns {
+        display: flex;
+        justify-content: space-around;
+        height: 100%;
+        position: relative;
+        z-index: 1;
+
+        .chart-column {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          padding: 0 8px;
+
+          .column-segments {
+            flex: 1;
+            display: flex;
+            flex-direction: column-reverse;
+            justify-content: flex-start;
+
+            .segment {
+              width: 100%;
+
+              &.passed {
+                background-color: #4caf50;
+              }
+
+              &.failed {
+                background-color: #f44336;
+              }
+
+              &.blocked {
+                background-color: #ff9800;
+              }
+
+              &.not-executed {
+                background-color: #9e9e9e;
+              }
+            }
+          }
+
+          .column-label {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding-top: 4px;
+            height: 20px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+      }
+    }
+  }
+
+  .chart-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+
+    .summary-metric {
+      text-align: center;
+
+      .metric-value {
+        font-size: 24px;
+        font-weight: 500;
+
+        &.passed, .passed & {
+          color: #4caf50;
+        }
+
+        &.failed, .failed & {
+          color: #f44336;
+        }
+
+        &.blocked, .blocked & {
+          color: #ff9800;
+        }
+
+        &.not-executed, .not-executed & {
+          color: #9e9e9e;
+        }
+      }
+
+      .metric-label {
+        font-size: 14px;
+        color: var(--text-secondary);
+      }
+    }
+  }
+}
+EOF
+
+# 21. Aktualizacja komponentu TestStatusChartComponent aby korzystał z plików HTML i SCSS
+cat > ${PROJECT_DIR}/test-manager/src/app/features/dashboard/components/test-status-chart/test-status-chart.component.ts << 'EOF'
+import { Component, Input, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { FormsModule } from '@angular/forms';
+import { ProjectService, Project } from '../../../../core/services/project.service';
+
+interface ChartData {
+  label: string;
+  passed: number;
+  failed: number;
+  blocked: number;
+  notExecuted: number;
+}
+
+@Component({
+  selector: 'app-test-status-chart',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatIconModule
+  ],
+  templateUrl: './test-status-chart.component.html',
+  styleUrls: ['./test-status-chart.component.scss']
+})
+export class TestStatusChartComponent implements OnInit {
+  @Input() height: string = '400px';
+
+  timeRangeOptions = [
+    { value: '7', label: 'Ostatnie 7 dni' },
+    { value: '30', label: 'Ostatnie 30 dni' },
+    { value: '90', label: 'Ostatnie 90 dni' }
+  ];
+
+  selectedTimeRange = '30';
+  selectedProject = 'all';
+
+  projects: Project[] = [];
+  chartData: ChartData[] = [];
+
+  constructor(private projectService: ProjectService) {}
+
+  ngOnInit() {
+    this.projectService.projects$.subscribe(projects => {
+      this.projects = projects;
+    });
+
+    this.loadChartData();
+  }
+
+  loadChartData() {
+    // Przykładowe dane dla widoku
+    if (this.selectedTimeRange === '7') {
+      this.chartData = [
+        { label: '6 mar', passed: 60, failed: 10, blocked: 5, notExecuted: 25 },
+        { label: '7 mar', passed: 65, failed: 8, blocked: 7, notExecuted: 20 },
+        { label: '8 mar', passed: 70, failed: 12, blocked: 3, notExecuted: 15 },
+        { label: '9 mar', passed: 68, failed: 15, blocked: 7, notExecuted: 10 },
+        { label: '10 mar', passed: 72, failed: 13, blocked: 5, notExecuted: 10 },
+        { label: '11 mar', passed: 75, failed: 10, blocked: 5, notExecuted: 10 },
+        { label: '12 mar', passed: 80, failed: 8, blocked: 7, notExecuted: 5 }
+      ];
+    } else if (this.selectedTimeRange === '30') {
+      this.chartData = [
+        { label: 'Tydzień 1', passed: 55, failed: 15, blocked: 10, notExecuted: 20 },
+        { label: 'Tydzień 2', passed: 60, failed: 15, blocked: 5, notExecuted: 20 },
+        { label: 'Tydzień 3', passed: 70, failed: 10, blocked: 5, notExecuted: 15 },
+        { label: 'Tydzień 4', passed: 80, failed: 8, blocked: 7, notExecuted: 5 }
+      ];
+    } else {
+      this.chartData = [
+        { label: 'Styczeń', passed: 50, failed: 20, blocked: 10, notExecuted: 20 },
+        { label: 'Luty', passed: 60, failed: 15, blocked: 5, notExecuted: 20 },
+        { label: 'Marzec', passed: 75, failed: 10, blocked: 5, notExecuted: 10 }
+      ];
+    }
+
+    // Filtrowanie według projektu
+    if (this.selectedProject !== 'all') {
+      // W rzeczywistej aplikacji, dane byłyby filtrowane po ID projektu
+      // Tutaj symulujemy różne dane dla różnych projektów
+      const projectIndex = this.projects.findIndex(p => p.id === this.selectedProject);
+      const adjustmentFactor = (projectIndex + 1) * 0.1;
+
+      this.chartData = this.chartData.map(item => ({
+        ...item,
+        passed: Math.min(Math.floor(item.passed * (1 + adjustmentFactor)), 100),
+        failed: Math.max(Math.floor(item.failed * (1 - adjustmentFactor)), 0),
+        blocked: Math.max(Math.floor(item.blocked * (1 - adjustmentFactor)), 0),
+        notExecuted: Math.max(Math.floor(item.notExecuted * (1 - adjustmentFactor)), 0)
+      }));
+    }
+  }
+
+  updateChart() {
+    this.loadChartData();
+  }
+
+  getSegmentHeight(value: number): number {
+    return value;
+  }
+
+  getTotalPassed(): number {
+    return this.getLastItem().passed;
+  }
+
+  getTotalFailed(): number {
+    return this.getLastItem().failed;
+  }
+
+  getTotalBlocked(): number {
+    return this.getLastItem().blocked;
+  }
+
+  getTotalNotExecuted(): number {
+    return this.getLastItem().notExecuted;
+  }
+
+  private getLastItem(): ChartData {
+    return this.chartData[this.chartData.length - 1];
+  }
+}
+EOF
+
+# 22. Aktualizacja DashboardComponent aby korzystał z TestStatusChartComponent
+cat > ${PROJECT_DIR}/test-manager/src/app/features/dashboard/dashboard.component.html << 'EOF'
+<div class="dashboard-container">
+  <app-page-header title="Dashboard">
+    <button mat-stroked-button class="filter-button">
+      <mat-icon>filter_list</mat-icon>
+      <span>Filtry</span>
+    </button>
+
+    <div class="view-toggle">
+      <button mat-icon-button class="view-toggle-button active">
+        <mat-icon>grid_view</mat-icon>
+      </button>
+      <button mat-icon-button class="view-toggle-button">
+        <mat-icon>view_list</mat-icon>
+      </button>
+    </div>
+  </app-page-header>
+
+  <div class="metrics-cards">
+    <app-metric-card
+      label="Wykonane testy"
+      value="1,234"
+      change="+12%"
+      changeLabel="od zeszłego tygodnia"
+      changeType="positive"
+      icon="check_circle"
+      color="blue">
+    </app-metric-card>
+
+    <app-metric-card
+      label="Błędy"
+      value="45"
+      change="+5%"
+      changeLabel="od zeszłego tygodnia"
+      changeType="negative"
+      icon="error"
+      color="red">
+    </app-metric-card>
+
+    <app-metric-card
+      label="Czas testowania"
+      value="87.5h"
+      change="-3%"
+      changeLabel="od zeszłego tygodnia"
+      changeType="positive"
+      icon="schedule"
+      color="purple">
+    </app-metric-card>
+
+    <app-metric-card
+      label="Skuteczność"
+      value="92.3%"
+      change="+2.3%"
+      changeLabel="od zeszłego tygodnia"
+      changeType="positive"
+      icon="bar_chart"
+      color="green">
+    </app-metric-card>
+  </div>
+
+  <div class="charts-container">
+    <mat-card class="chart-card large">
+      <mat-card-content>
+        <app-test-status-chart></app-test-status-chart>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-content>
+        <div class="chart-header">
+          <h2 class="chart-title">Najnowsze testy</h2>
+          <a class="see-all-link" mat-button routerLink="/test-runs">Zobacz wszystkie</a>
+        </div>
+
+        <div class="recent-tests-list">
+          <mat-card *ngFor="let test of recentTests" class="recent-test-item">
+            <div class="test-header">
+              <span class="test-name">{{ test.name }}</span>
+              <span class="test-status" [ngClass]="test.status">
+                {{ test.status === 'success' ? 'Sukces' :
+                   test.status === 'error' ? 'Błąd' : 'W toku' }}
+              </span>
+            </div>
+            <div class="test-details">
+              {{ test.project }} • {{ test.time }}
+            </div>
+          </mat-card>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+EOF
+
+# 23. Dodanie routera do nawigacji w TestRunsComponent
+cat > ${PROJECT_DIR}/test-manager/src/app/features/test-runs/test-runs.component.ts << 'EOF'
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { StatusChipComponent } from '../../shared/ui/status-chip/status-chip.component';
+import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import { TestRun } from '../../core/models/test-run.model';
+import { ApiService } from '../../core/services/api.service';
+
+@Component({
+  selector: 'app-test-runs',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatCardModule,
+    MatExpansionModule,
+    MatProgressBarModule,
+    MatButtonModule,
+    MatIconModule,
+    MatSnackBarModule,
+    StatusChipComponent,
+    PageHeaderComponent
+  ],
+  templateUrl: './test-runs.component.html',
+  styleUrls: ['./test-runs.component.scss']
+})
+export class TestRunsComponent implements OnInit {
+  activeRuns: TestRun[] = [];
+  completedRuns: TestRun[] = [];
+  scheduledRuns: TestRun[] = [];
+  isLoading = true;
+
+  constructor(
+    private apiService: ApiService,
+    private router: Router,
+    private snackBar: MatSnackBar
+  ) {}
+
+  ngOnInit() {
+    this.loadTestRuns();
+  }
+
+  loadTestRuns() {
+    this.isLoading = true;
+    this.apiService.getTestRuns().subscribe(
+      testRuns => {
+        // Reset arrays
+        this.activeRuns = [];
+        this.completedRuns = [];
+        this.scheduledRuns = [];
+
+        // Categorize data by status
+        testRuns.forEach(run => {
+          if (run.progress && run.progress.percentage < 100) {
+            this.activeRuns.push(run);
+          } else if (run.results) {
+            this.completedRuns.push(run);
+          } else {
+            this.scheduledRuns.push(run);
+          }
+        });
+
+        this.isLoading = false;
+      },
+      error => {
+        console.error('Error loading test runs:', error);
+        this.snackBar.open('Error loading data', 'OK', { duration: 3000 });
+        
+        // Fallback to example data in case of API error
+        this.setupMockData();
+        this.isLoading = false;
+      }
+    );
+  }
+
+  setupMockData() {
+    this.activeRuns = [
+      {
+        id: 'TR-007',
+        name: 'Testy modułu płatności',
+        project: 'Portal klienta',
+        progress: { current: 15, total: 20, percentage: 75 }
+      },
+      {
+        id: 'TR-008',
+        name: 'Testy wydajnościowe API',
+        project: 'Backend API',
+        progress: { current: 6, total: 20, percentage: 30 }
+      }
+    ];
+    
+    this.completedRuns = [
+      {
+        id: 'TR-006',
+        name: 'Testy interfejsu użytkownika',
+        project: 'Portal klienta',
+        results: { success: 18, errors: 2 }
+      },
+      {
+        id: 'TR-005',
+        name: 'Testy funkcjonalności wyszukiwania',
+        project: 'Aplikacja mobilna',
+        results: { success: 15, errors: 0 }
+      },
+      {
+        id: 'TR-004',
+        name: 'Testy bezpieczeństwa',
+        project: 'Backend API',
+        results: { success: 12, errors: 3 }
+      }
+    ];
+    
+    this.scheduledRuns = [
+      {
+        id: 'TR-009',
+        name: 'Testy integracji z API płatności',
+        project: 'Portal klienta',
+        date: '15 mar 2025'
+      },
+      {
+        id: 'TR-010',
+        name: 'Testy kompatybilności mobilnej',
+        project: 'Aplikacja mobilna',
+        date: '18 mar 2025'
+      }
+    ];
+  }
+
+  createTestRun() {
+    this.router.navigate(['/test-runs/create']);
+  }
+
+  continueTestRun(run: TestRun) {
+    this.router.navigate(['/test-runs/execute', run.id]);
+  }
+
+  viewTestRunDetails(run: TestRun) {
+    this.router.navigate(['/test-runs/details', run.id]);
+  }
+
+  editTestRun(run: TestRun) {
+    this.router.navigate(['/test-runs/create'], { queryParams: { testRunId: run.id } });
+  }
+
+  generateReport(run: TestRun) {
+    this.router.navigate(['/reports/generate'], { queryParams: { testRunId: run.id } });
+  }
+}
+EOF

@@ -1,5 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
@@ -18,6 +19,7 @@ import { ApiService } from '../../core/services/api.service';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MatCardModule,
     MatTableModule,
     MatPaginatorModule,

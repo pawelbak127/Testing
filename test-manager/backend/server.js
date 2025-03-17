@@ -8,9 +8,9 @@ const middlewares = jsonServer.defaults();
 // Set default middlewares (logger, static, cors and no-cache)
 server.use(middlewares);
 
-// Enable CORS for all routes
+// Konfiguracja CORS - zezwolenie na żądania z różnych źródeł
 server.use(cors({
-  origin: 'http://localhost:4200',
+  origin: '*',  // Zezwól wszystkim źródłom (w środowisku produkcyjnym należy to ograniczyć)
   credentials: true
 }));
 

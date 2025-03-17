@@ -16,11 +16,12 @@ export class ThemeService {
     private overlayContainer: OverlayContainer
   ) {
     if (isPlatformBrowser(this.platformId)) {
-      // Check for saved preference
+      // Sprawdź zapisane preferencje
       const savedTheme = localStorage.getItem('theme');
 
-      const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initialDarkMode = savedTheme === 'dark' ||
+      // Sprawdź preferencje systemowe
+      const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initialDarkMode = savedTheme === 'dark' || 
         (savedTheme === null && prefersDarkMode);
 
       this._darkMode.set(initialDarkMode);
@@ -33,7 +34,7 @@ export class ThemeService {
     this._darkMode.set(newValue);
     this.applyTheme(newValue);
 
-    // Save preference to localStorage if in browser
+    // Zapisz preferencje w localStorage jeśli w przeglądarce
     if (isPlatformBrowser(this.platformId)) {
       localStorage.setItem('theme', newValue ? 'dark' : 'light');
     }
@@ -41,7 +42,7 @@ export class ThemeService {
 
   applyTheme(isDark: boolean) {
     if (!isPlatformBrowser(this.platformId)) {
-      return; // Skip DOM manipulation on server
+      return; // Pomiń manipulację DOM na serwerze
     }
 
     const bodyElement = this.document.body;
@@ -65,7 +66,7 @@ export class ThemeService {
     }
   }
 
-  // Helper method to get current dark mode value
+  // Pomocnicza metoda do sprawdzania aktualnego trybu ciemnego
   isDarkMode(): boolean {
     return this._darkMode();
   }

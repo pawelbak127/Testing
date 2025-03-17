@@ -76,7 +76,7 @@
             <div class="test-header">
               <span class="test-name">{{ test.name }}</span>
               <span class="test-status" [ngClass]="test.status">
-                {{ test.status === 'success' ? 'Sukces' : 
+                {{ test.status === 'success' ? 'Sukces' :
                    test.status === 'error' ? 'Błąd' : 'W toku' }}
               </span>
             </div>
