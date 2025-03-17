@@ -60,21 +60,7 @@
   <div class="charts-container">
     <mat-card class="chart-card large">
       <mat-card-content>
-        <div class="chart-header">
-          <h2 class="chart-title">Status wykonania testów</h2>
-
-          <mat-form-field appearance="outline" class="time-range-selector">
-            <mat-select [(value)]="selectedTimeRange">
-              <mat-option *ngFor="let option of timeRangeOptions" [value]="option">
-                {{ option }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        <div class="chart-placeholder">
-          [Tutaj wykres statusu testów]
-        </div>
+        <app-test-status-chart></app-test-status-chart>
       </mat-card-content>
     </mat-card>
 

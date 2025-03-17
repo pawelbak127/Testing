@@ -58,6 +58,6 @@ export const routes: Routes = [
     path: 'settings/project',
     loadComponent: () => import('./features/settings/project-settings.component').then(m => m.ProjectSettingsComponent)
   },
-  // Fallback route for unmatched paths
+  // Trasa fallback dla niedopasowanych ścieżek
   { path: '**', redirectTo: '/dashboard' }
 ];

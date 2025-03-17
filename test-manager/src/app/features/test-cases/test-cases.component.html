@@ -1,6 +1,6 @@
 <div class="test-cases-container">
   <app-page-header title="Przypadki testowe">
-    <button mat-flat-button color="primary">
+    <button mat-flat-button color="primary" (click)="createTestCase()">
       <mat-icon>add</mat-icon>
       <span>Dodaj przypadek</span>
     </button>
@@ -15,7 +15,7 @@
         </button>
         
         <mat-form-field appearance="outline" class="project-selector">
-          <mat-select [(value)]="selectedProject">
+          <mat-select [(value)]="selectedProject" (selectionChange)="filterByProject()">
             <mat-option *ngFor="let project of projects" [value]="project">
               {{ project }}
             </mat-option>
@@ -29,64 +29,87 @@
       </mat-form-field>
     </div>
     
-    <div class="mat-elevation-z0">
-      <table mat-table [dataSource]="dataSource" class="full-width-table">
-        <!-- ID Column -->
-        <ng-container matColumnDef="id">
-          <th mat-header-cell *matHeaderCellDef>ID</th>
-          <td mat-cell *matCellDef="let row">{{ row.id }}</td>
-        </ng-container>
-        
-        <!-- Name Column -->
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Nazwa</th>
-          <td mat-cell *matCellDef="let row" class="name-cell">{{ row.name }}</td>
-        </ng-container>
-        
-        <!-- Project Column -->
-        <ng-container matColumnDef="project">
-          <th mat-header-cell *matHeaderCellDef>Projekt</th>
-          <td mat-cell *matCellDef="let row">
-            <div class="project-indicator">
-              <div class="color-dot" [ngClass]="row.project.color"></div>
-              <span>{{ row.project.name }}</span>
-            </div>
-          </td>
-        </ng-container>
-        
-        <!-- Priority Column -->
-        <ng-container matColumnDef="priority">
-          <th mat-header-cell *matHeaderCellDef>Priorytet</th>
-          <td mat-cell *matCellDef="let row">
-            <app-status-chip [text]="row.priority.level" [color]="row.priority.color"></app-status-chip>
-          </td>
-        </ng-container>
-        
-        <!-- Author Column -->
-        <ng-container matColumnDef="author">
-          <th mat-header-cell *matHeaderCellDef>Autor</th>
-          <td mat-cell *matCellDef="let row">{{ row.author }}</td>
-        </ng-container>
-        
-        <!-- Creation Date Column -->
-        <ng-container matColumnDef="creationDate">
-          <th mat-header-cell *matHeaderCellDef>Data utworzenia</th>
-          <td mat-cell *matCellDef="let row">{{ row.creationDate }}</td>
-        </ng-container>
-        
-        <!-- Status Column -->
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let row">
-            <app-status-chip [text]="row.status.name" [color]="row.status.color"></app-status-chip>
-          </td>
-        </ng-container>
-        
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
-      </table>
+    <div class="table-content">
+      <div class="loading-indicator" *ngIf="isLoading">
+        <mat-icon>hourglass_empty</mat-icon>
+        <p>Ładowanie przypadków testowych...</p>
+      </div>
       
-      <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+      <div class="mat-elevation-z0" *ngIf="!isLoading">
+        <table mat-table [dataSource]="dataSource" class="full-width-table">
+          <!-- ID Column -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef>ID</th>
+            <td mat-cell *matCellDef="let row">{{ row.id }}</td>
+          </ng-container>
+          
+          <!-- Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Nazwa</th>
+            <td mat-cell *matCellDef="let row" class="name-cell">{{ row.name }}</td>
+          </ng-container>
+          
+          <!-- Project Column -->
+          <ng-container matColumnDef="project">
+            <th mat-header-cell *matHeaderCellDef>Projekt</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="project-indicator">
+                <div class="color-dot" [ngClass]="row.project.color"></div>
+                <span>{{ row.project.name }}</span>
+              </div>
+            </td>
+          </ng-container>
+          
+          <!-- Priority Column -->
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef>Priorytet</th>
+            <td mat-cell *matCellDef="let row">
+              <app-status-chip [text]="row.priority.level" [color]="row.priority.color"></app-status-chip>
+            </td>
+          </ng-container>
+          
+          <!-- Author Column -->
+          <ng-container matColumnDef="author">
+            <th mat-header-cell *matHeaderCellDef>Autor</th>
+            <td mat-cell *matCellDef="let row">{{ row.author }}</td>
+          </ng-container>
+          
+          <!-- Creation Date Column -->
+          <ng-container matColumnDef="creationDate">
+            <th mat-header-cell *matHeaderCellDef>Data utworzenia</th>
+            <td mat-cell *matCellDef="let row">{{ row.creationDate }}</td>
+          </ng-container>
+          
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <app-status-chip [text]="row.status.name" [color]="row.status.color"></app-status-chip>
+            </td>
+          </ng-container>
+          
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Akcje</th>
+            <td mat-cell *matCellDef="let row" class="actions-cell">
+              <button mat-icon-button color="primary" (click)="viewTestCase(row.id)" matTooltip="Zobacz szczegóły">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button color="accent" (click)="editTestCase(row.id)" matTooltip="Edytuj">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteTestCase(row.id)" matTooltip="Usuń">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+          
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row" (click)="viewTestCase(row.id)"></tr>
+        </table>
+        
+        <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+      </div>
     </div>
   </mat-card>
 </div>

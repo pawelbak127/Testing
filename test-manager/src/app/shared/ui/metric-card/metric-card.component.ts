@@ -11,31 +11,8 @@ import { MatIconModule } from '@angular/material/icon';
     MatCardModule,
     MatIconModule
   ],
-  template: `
-    <mat-card class="metric-card">
-      <mat-card-content>
-        <div class="metric-content">
-          <div class="metric-info">
-            <div class="metric-label">{{ label }}</div>
-            <div class="metric-value">{{ value }}</div>
-            <div class="metric-change" [ngClass]="changeType">
-              <span>{{ change }}</span> {{ changeLabel }}
-            </div>
-          </div>
-          <div class="metric-icon" [ngClass]="color">
-            <mat-icon>{{ icon }}</mat-icon>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  `,
-  styles: [`
-    .metric-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-  `]
+  templateUrl: './metric-card.component.html',
+  styleUrls: ['./metric-card.component.scss']
 })
 export class MetricCardComponent {
   @Input() label = '';

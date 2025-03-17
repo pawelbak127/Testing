@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import { tap } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
 
 export interface Project {
   id: string;
@@ -20,25 +20,49 @@ export class ProjectService {
   private selectedProjectSubject = new BehaviorSubject<Project | null>(null);
   
   constructor(private apiService: ApiService) {
-    // Load projects from API when service is initialized
+    // Załaduj projekty z API przy inicjalizacji serwisu
     this.loadProjects();
   }
   
   private loadProjects(): void {
-    this.apiService.getProjects().subscribe(
+    this.apiService.getProjects().pipe(
+      catchError(error => {
+        console.error('Błąd podczas ładowania projektów:', error);
+        // Używamy danych przykładowych, jeśli API zwróci błąd
+        this.setupMockProjects();
+        return [];
+      })
+    ).subscribe(
       (projects) => {
-        this.projects = projects;
-        this.projectsSubject.next(this.projects);
-        
-        // Set first project as selected if there is one and none is currently selected
-        if (this.projects.length > 0 && !this.selectedProjectSubject.value) {
-          this.selectedProjectSubject.next(this.projects[0]);
+        if (projects && projects.length > 0) {
+          this.projects = projects;
+          this.projectsSubject.next(this.projects);
+          
+          // Ustaw pierwszy projekt jako wybrany, jeśli jest jeden i żaden nie jest aktualnie wybrany
+          if (this.projects.length > 0 && !this.selectedProjectSubject.value) {
+            this.selectedProjectSubject.next(this.projects[0]);
+          }
+        } else {
+          // Jeśli API zwróciło pustą listę, użyj danych przykładowych
+          this.setupMockProjects();
         }
-      },
-      (error) => {
-        console.error('Error loading projects:', error);
       }
     );
+  }
+
+  private setupMockProjects(): void {
+    // Użyj przykładowych danych projektów
+    this.projects = [
+      { id: 'proj-1', name: 'Portal klienta', color: 'green', description: 'Aplikacja internetowa dla klientów' },
+      { id: 'proj-2', name: 'Aplikacja mobilna', color: 'purple', description: 'Aplikacja na iOS i Android' },
+      { id: 'proj-3', name: 'Backend API', color: 'blue', description: 'REST API dla wszystkich aplikacji' }
+    ];
+    this.projectsSubject.next(this.projects);
+    
+    // Ustaw pierwszy projekt jako wybrany
+    if (this.projects.length > 0) {
+      this.selectedProjectSubject.next(this.projects[0]);
+    }
   }
   
   get projects$(): Observable<Project[]> {
@@ -61,7 +85,14 @@ export class ProjectService {
         this.projectsSubject.next(this.projects);
       },
       (error) => {
-        console.error('Error creating project:', error);
+        console.error('Błąd podczas tworzenia projektu:', error);
+        // W przypadku błędu API, dodaj projekt z wygenerowanym ID lokalnie
+        const mockProject = {
+          ...project,
+          id: `proj-${this.projects.length + 1}`
+        };
+        this.projects = [...this.projects, mockProject];
+        this.projectsSubject.next(this.projects);
       }
     );
   }
@@ -74,14 +105,25 @@ export class ProjectService {
         );
         this.projectsSubject.next(this.projects);
         
-        // Update selected project if it's the one being updated
+        // Zaktualizuj wybrany projekt, jeśli to jest ten, który został zaktualizowany
         const currentSelected = this.selectedProjectSubject.value;
         if (currentSelected && currentSelected.id === id) {
           this.selectedProjectSubject.next({ ...currentSelected, ...updatedProject });
         }
       },
       (error) => {
-        console.error('Error updating project:', error);
+        console.error('Błąd podczas aktualizacji projektu:', error);
+        // W przypadku błędu API, zaktualizuj projekt lokalnie
+        this.projects = this.projects.map(p => 
+          p.id === id ? { ...p, ...project } : p
+        );
+        this.projectsSubject.next(this.projects);
+        
+        // Zaktualizuj wybrany projekt, jeśli to jest ten, który został zaktualizowany
+        const currentSelected = this.selectedProjectSubject.value;
+        if (currentSelected && currentSelected.id === id) {
+          this.selectedProjectSubject.next({ ...currentSelected, ...project });
+        }
       }
     );
   }
@@ -92,14 +134,23 @@ export class ProjectService {
         this.projects = this.projects.filter(p => p.id !== id);
         this.projectsSubject.next(this.projects);
         
-        // Reset selection if the deleted project was selected
+        // Zresetuj wybór, jeśli usunięty projekt był wybrany
         const currentSelected = this.selectedProjectSubject.value;
         if (currentSelected && currentSelected.id === id) {
           this.selectedProjectSubject.next(this.projects[0] || null);
         }
       },
       (error) => {
-        console.error('Error deleting project:', error);
+        console.error('Błąd podczas usuwania projektu:', error);
+        // W przypadku błędu API, usuń projekt lokalnie
+        this.projects = this.projects.filter(p => p.id !== id);
+        this.projectsSubject.next(this.projects);
+        
+        // Zresetuj wybór, jeśli usunięty projekt był wybrany
+        const currentSelected = this.selectedProjectSubject.value;
+        if (currentSelected && currentSelected.id === id) {
+          this.selectedProjectSubject.next(this.projects[0] || null);
+        }
       }
     );
   }

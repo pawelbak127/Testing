@@ -1,6 +1,6 @@
 <div class="test-runs-container">
   <app-page-header title="Wykonania testów">
-    <button mat-flat-button color="primary">
+    <button mat-flat-button color="primary" (click)="createTestRun()">
       <mat-icon>add</mat-icon>
       <span>Nowe wykonanie</span>
     </button>
@@ -32,8 +32,8 @@
               </div>
               
               <div class="actions">
-                <button mat-stroked-button color="primary">Kontynuuj</button>
-                <button mat-button>Szczegóły</button>
+                <button mat-stroked-button color="primary" (click)="continueTestRun(run)">Kontynuuj</button>
+                <button mat-button (click)="viewTestRunDetails(run)">Szczegóły</button>
               </div>
             </div>
           </mat-expansion-panel>
@@ -72,8 +72,8 @@
               </div>
               
               <div class="actions">
-                <button mat-stroked-button color="primary">Raport</button>
-                <button mat-button>Szczegóły</button>
+                <button mat-stroked-button color="primary" (click)="generateReport(run)">Raport</button>
+                <button mat-button (click)="viewTestRunDetails(run)">Szczegóły</button>
               </div>
             </div>
           </mat-expansion-panel>
@@ -105,8 +105,8 @@
               </div>
               
               <div class="actions">
-                <button mat-stroked-button color="primary">Edytuj</button>
-                <button mat-button>Szczegóły</button>
+                <button mat-stroked-button color="primary" (click)="editTestRun(run)">Edytuj</button>
+                <button mat-button (click)="viewTestRunDetails(run)">Szczegóły</button>
               </div>
             </div>
           </mat-expansion-panel>

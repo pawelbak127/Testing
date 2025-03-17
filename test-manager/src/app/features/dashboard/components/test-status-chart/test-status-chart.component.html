@@ -1,0 +1,96 @@
+<div class="chart-header">
+  <h2 class="chart-title">Status wykonania testów</h2>
+
+  <div class="chart-controls">
+    <mat-form-field appearance="outline" class="time-range-selector">
+      <mat-select [(value)]="selectedTimeRange" (selectionChange)="updateChart()">
+        <mat-option *ngFor="let option of timeRangeOptions" [value]="option.value">
+          {{ option.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="project-selector">
+      <mat-select [(value)]="selectedProject" (selectionChange)="updateChart()">
+        <mat-option value="all">Wszystkie projekty</mat-option>
+        <mat-option *ngFor="let project of projects" [value]="project.id">
+          <div class="project-option">
+            <div class="color-dot" [ngClass]="project.color"></div>
+            <span>{{ project.name }}</span>
+          </div>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+</div>
+
+<div class="chart-container">
+  <div class="chart-legend">
+    <div class="legend-item">
+      <div class="legend-color passed"></div>
+      <div class="legend-label">Zaliczone</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color failed"></div>
+      <div class="legend-label">Niezaliczone</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color blocked"></div>
+      <div class="legend-label">Zablokowane</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color not-executed"></div>
+      <div class="legend-label">Niewykonane</div>
+    </div>
+  </div>
+
+  <div class="test-status-chart">
+    <div class="chart-axis y-axis">
+      <div class="axis-label">100%</div>
+      <div class="axis-label">80%</div>
+      <div class="axis-label">60%</div>
+      <div class="axis-label">40%</div>
+      <div class="axis-label">20%</div>
+      <div class="axis-label">0%</div>
+    </div>
+    <div class="chart-body">
+      <div class="chart-columns">
+        <div class="chart-column" *ngFor="let item of chartData">
+          <div class="column-segments">
+            <div class="segment passed" [style.height.%]="getSegmentHeight(item.passed)"></div>
+            <div class="segment failed" [style.height.%]="getSegmentHeight(item.failed)"></div>
+            <div class="segment blocked" [style.height.%]="getSegmentHeight(item.blocked)"></div>
+            <div class="segment not-executed" [style.height.%]="getSegmentHeight(item.notExecuted)"></div>
+          </div>
+          <div class="column-label">{{ item.label }}</div>
+        </div>
+      </div>
+      <div class="chart-gridlines">
+        <div class="gridline"></div>
+        <div class="gridline"></div>
+        <div class="gridline"></div>
+        <div class="gridline"></div>
+        <div class="gridline"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-summary">
+    <div class="summary-metric passed">
+      <div class="metric-value">{{ getTotalPassed() }}</div>
+      <div class="metric-label">Zaliczone</div>
+    </div>
+    <div class="summary-metric failed">
+      <div class="metric-value">{{ getTotalFailed() }}</div>
+      <div class="metric-label">Niezaliczone</div>
+    </div>
+    <div class="summary-metric blocked">
+      <div class="metric-value">{{ getTotalBlocked() }}</div>
+      <div class="metric-label">Zablokowane</div>
+    </div>
+    <div class="summary-metric not-executed">
+      <div class="metric-value">{{ getTotalNotExecuted() }}</div>
+      <div class="metric-label">Niewykonane</div>
+    </div>
+  </div>
+</div>

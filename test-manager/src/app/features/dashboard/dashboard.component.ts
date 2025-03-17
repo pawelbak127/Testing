@@ -1,27 +1,33 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
+import { StatusChipComponent } from '../../shared/ui/status-chip/status-chip.component';
 import { MetricCardComponent } from '../../shared/ui/metric-card/metric-card.component';
 import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import { TestStatusChartComponent } from './components/test-status-chart/test-status-chart.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
     MatSelectModule,
     FormsModule,
+    StatusChipComponent,
     MetricCardComponent,
-    PageHeaderComponent
+    PageHeaderComponent,
+    TestStatusChartComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']

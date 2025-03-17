@@ -3,7 +3,7 @@ import { routes } from './app.routes';
 
 // Zdefiniuj dokładnie takie same ścieżki jak w app.routes.ts, ale z odpowiednim RenderMode
 export const serverRoutes: ServerRoute[] = [
-  // Dynamiczne trasy z parametrami
+  // Dynamiczne trasy z parametrami - renderowane po stronie klienta
   {
     path: 'test-cases/edit/:id',
     renderMode: RenderMode.Client
@@ -20,8 +20,10 @@ export const serverRoutes: ServerRoute[] = [
     path: 'test-runs/execute/:id',
     renderMode: RenderMode.Client
   },
-  
-  // Możesz dodać inne trasy, które mają parametry
+  {
+    path: 'reports/generate',
+    renderMode: RenderMode.Client
+  },
   
   // Dla wszystkich innych tras używamy Prerender
   {

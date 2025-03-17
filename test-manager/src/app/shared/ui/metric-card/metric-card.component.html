@@ -1,0 +1,16 @@
+<mat-card class="metric-card">
+  <mat-card-content>
+    <div class="metric-content">
+      <div class="metric-info">
+        <div class="metric-label">{{ label }}</div>
+        <div class="metric-value">{{ value }}</div>
+        <div class="metric-change" [ngClass]="changeType">
+          <span>{{ change }}</span> {{ changeLabel }}
+        </div>
+      </div>
+      <div class="metric-icon" [ngClass]="color">
+        <mat-icon>{{ icon }}</mat-icon>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
