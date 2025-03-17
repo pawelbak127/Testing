@@ -1,0 +1,299 @@
+/* You can add global styles to this file, and also import other style files */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+/* Custom CSS Variables */
+:root {
+  --background-light: #f5f5f5;
+  --card-background-light: #ffffff;
+  --text-light: rgba(0, 0, 0, 0.87);
+  --text-light-secondary: rgba(0, 0, 0, 0.6);
+
+  --background-dark: #303030;
+  --card-background-dark: #424242;
+  --text-dark: rgba(255, 255, 255, 0.87);
+  --text-dark-secondary: rgba(255, 255, 255, 0.7);
+
+  --primary-color: #3f51b5;
+  --primary-color-dark: #5c6bc0;
+  --accent-color: #ff4081;
+  --accent-color-dark: #ff80ab;
+  --success-color: #4caf50;
+  --success-color-dark: #66bb6a;
+  --warning-color: #ff9800;
+  --warning-color-dark: #ffa726;
+  --error-color: #f44336;
+  --error-color-dark: #ef5350;
+  --info-color: #2196f3;
+  --info-color-dark: #42a5f5;
+  --purple-color: #9c27b0;
+  --purple-color-dark: #ab47bc;
+}
+
+/* Light theme (explicit) */
+.light-theme, :root {
+  --background: var(--background-light);
+  --card-background: var(--card-background-light);
+  --text-color: var(--text-light);
+  --text-secondary: var(--text-light-secondary);
+  --divider-color: rgba(0, 0, 0, 0.12);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+
+  --primary: var(--primary-color);
+  --accent: var(--accent-color);
+  --warn: var(--error-color);
+  --success: var(--success-color);
+  --warning: var(--warning-color);
+  --info: var(--info-color);
+  --purple: var(--purple-color);
+}
+
+/* Dark theme styles */
+.dark-theme {
+  --background: var(--background-dark);
+  --card-background: var(--card-background-dark);
+  --text-color: var(--text-dark);
+  --text-secondary: var(--text-dark-secondary);
+  --divider-color: rgba(255, 255, 255, 0.12);
+  --shadow-color: rgba(0, 0, 0, 0.4);
+
+  --primary: var(--primary-color-dark);
+  --accent: var(--accent-color-dark);
+  --warn: var(--error-color-dark);
+  --success: var(--success-color-dark);
+  --warning: var(--warning-color-dark);
+  --info: var(--info-color-dark);
+  --purple: var(--purple-color-dark);
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom dark mode overrides for Material components */
+.dark-theme .mat-mdc-card {
+  background-color: var(--card-background);
+  color: var(--text-color);
+}
+
+.dark-theme .mat-drawer,
+.dark-theme .mat-sidenav {
+  background-color: var(--card-background);
+  color: var(--text-color);
+}
+
+.dark-theme .mat-toolbar.mat-primary {
+  background-color: #1e1e1e;
+  color: var(--text-color);
+}
+
+.dark-theme .mat-drawer-container,
+.dark-theme .mat-sidenav-container {
+  background-color: var(--background);
+  color: var(--text-color);
+}
+
+.dark-theme .mat-expansion-panel {
+  background-color: var(--card-background);
+  color: var(--text-color);
+}
+
+.dark-theme .mat-expansion-panel-header-title,
+.dark-theme .mat-expansion-panel-header-description {
+  color: var(--text-color);
+}
+
+.dark-theme .mat-mdc-table {
+  background-color: var(--card-background);
+  color: var(--text-color);
+}
+
+.dark-theme .mat-mdc-paginator {
+  background-color: var(--card-background);
+  color: var(--text-color);
+}
+
+.dark-theme .mat-mdc-option {
+  color: var(--text-color);
+}
+
+.dark-theme .mat-mdc-select-value-text {
+  color: var(--text-color);
+}
+
+.dark-theme .mat-mdc-form-field-label {
+  color: var(--text-secondary);
+}
+
+.dark-theme .mat-mdc-form-field-outline {
+  color: var(--text-secondary);
+}
+
+.dark-theme .mat-mdc-input-element {
+  color: var(--text-color);
+}
+
+.dark-theme .mat-divider {
+  border-top-color: var(--divider-color) !important;
+}
+
+.dark-theme .mat-mdc-tab-header,
+.dark-theme .mat-mdc-tab-label-container {
+  background-color: var(--card-background);
+}
+
+.dark-theme .mat-mdc-tab-label,
+.dark-theme .mat-mdc-tab-link {
+  color: var(--text-color);
+}
+
+/* Common page layout styles */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0;
+  color: var(--text-color);
+}
+
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Custom status chip styles */
+.status-chip {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-chip.primary {
+  background-color: rgba(63, 81, 181, 0.1);
+  color: var(--primary);
+}
+
+.status-chip.accent {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: var(--warning);
+}
+
+.status-chip.warn {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--warn);
+}
+
+.status-chip.success {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--success);
+}
+
+.status-chip.default {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: var(--text-secondary);
+}
+
+.dark-theme .status-chip.primary {
+  background-color: rgba(92, 107, 192, 0.2);
+}
+
+.dark-theme .status-chip.accent {
+  background-color: rgba(255, 167, 38, 0.2);
+}
+
+.dark-theme .status-chip.warn {
+  background-color: rgba(239, 83, 80, 0.2);
+}
+
+.dark-theme .status-chip.success {
+  background-color: rgba(102, 187, 106, 0.2);
+}
+
+.dark-theme .status-chip.default {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Metric card component styles */
+.metric-card .metric-label {
+  color: var(--text-secondary);
+}
+
+.metric-card .metric-value {
+  color: var(--text-color);
+}
+
+.metric-card .metric-change {
+  color: var(--text-secondary);
+}
+
+.metric-card .metric-change.positive span {
+  color: var(--success);
+}
+
+.metric-card .metric-change.negative span {
+  color: var(--warn);
+}
+
+.metric-card .metric-icon.blue {
+  background-color: rgba(63, 81, 181, 0.1);
+  color: var(--primary);
+}
+
+.metric-card .metric-icon.red {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--warn);
+}
+
+.metric-card .metric-icon.purple {
+  background-color: rgba(156, 39, 176, 0.1);
+  color: var(--purple);
+}
+
+.metric-card .metric-icon.green {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--success);
+}
+
+.dark-theme .metric-card .metric-icon.blue {
+  background-color: rgba(92, 107, 192, 0.2);
+}
+
+.dark-theme .metric-card .metric-icon.red {
+  background-color: rgba(239, 83, 80, 0.2);
+}
+
+.dark-theme .metric-card .metric-icon.purple {
+  background-color: rgba(171, 71, 188, 0.2);
+}
+
+.dark-theme .metric-card .metric-icon.green {
+  background-color: rgba(102, 187, 106, 0.2);
+}
+
+.dark-theme .see-all-link.mat-mdc-button {
+  color: var(--primary-color-dark) !important;
+}
+
+.see-all-link.mat-mdc-button:hover {
+  background-color: rgba(var(--primary-rgb), 0.04);
+}
+
+.dark-theme .see-all-link.mat-mdc-button:hover {
+  background-color: rgba(var(--primary-rgb), 0.12);
+}
